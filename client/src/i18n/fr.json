@@ -1,0 +1,17 @@
+{
+    "welcome": "Bienvenue dans le jeu !",
+    "title": "Devil's Plan - Question ou Vérité",
+    "language": "Langue",
+    "french": "Français",
+    "english": "Anglais",
+    "room": {
+        "create": "Créer une salle",
+        "join": "Rejoindre",
+        "enterCode": "Code de salle",
+        "created": "Salle créée : {{roomId}}",
+        "joined": "Connecté à la salle : {{roomId}}",
+        "errorCreating": "Erreur lors de la création de la salle.",
+        "errorJoining": "Erreur : {{error}}"
+      }
+  }
+  

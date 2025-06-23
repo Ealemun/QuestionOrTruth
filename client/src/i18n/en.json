@@ -1,0 +1,17 @@
+{
+    "welcome": "Welcome to the game!",
+    "title": "Devil's Plan - Question or Truth",
+    "language": "Language",
+    "french": "French",
+    "english": "English",
+    "room": {
+        "create": "Create Room",
+        "join": "Join",
+        "enterCode": "Room Code",
+        "created": "Room created: {{roomId}}",
+        "joined": "Joined room: {{roomId}}",
+        "errorCreating": "Error creating room.",
+        "errorJoining": "Error: {{error}}"
+      }
+  }
+  
