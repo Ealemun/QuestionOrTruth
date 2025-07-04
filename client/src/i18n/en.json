@@ -11,7 +11,9 @@
         "created": "Room created: {{roomId}}",
         "joined": "Joined room: {{roomId}}",
         "errorCreating": "Error creating room.",
-        "errorJoining": "Error: {{error}}"
+        "errorJoining": "Error: {{error}}",
+        "name": "Room name",
+        "leave": "Leave the room"
       }
   }
   
