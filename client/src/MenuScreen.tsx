@@ -13,20 +13,20 @@ const MenuScreen: React.FC<Props> = ({ onRoomJoined }) => {
 
   const handleCreate = () => {
     if (!playerName) return;
-    socket.emit('player:create_room', null, (response: any) => {
-      if (response.roomId) {
-        onRoomJoined({ id: response.roomId, players: [ { id: socket.id, name: playerName } ] }, playerName);
+    socket.emit('player:create_room', playerName, (response: any) => {
+      if (response.room) {
+        onRoomJoined(response.room, playerName);
       }
     });
   };
 
   const handleJoin = () => {
     if (!playerName || !roomCode) return;
-    socket.emit('player:join_room', roomCode, (response: any) => {
+    socket.emit('player:join_room', roomCode, playerName, (response: any) => {
       if (response.error) {
         alert(response.error);
       } else {
-        onRoomJoined(response, playerName);
+        onRoomJoined(response.room, playerName);
       }
     });
   };

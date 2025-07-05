@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { createRoom, joinRoom } from './services/gameManager';
+import { createRoom, joinRoom, removePlayer } from './services/gameManager';
 
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -23,15 +23,16 @@ export const initSocket = (httpServer: HttpServer) => {
       // ici tu broadcast, sauvegardes, etc.
     });
 
-    socket.on('player:create_room', (_, callback) => {
-        const room = createRoom(socket.id);
+    socket.on('player:create_room', (playerName: string, callback) => {
+        const room = createRoom(socket.id, playerName);
         socket.join(room.id);
         console.log(`🆕 Room created: ${room.id}`);
-        callback({ roomId: room.id, status: room.status });
+        // callback({ roomId: room.id, status: room.status });
+        callback({room: room});
       });
       
-      socket.on('player:join_room', (roomId: string, callback) => {
-        const room = joinRoom(roomId, socket.id);
+      socket.on('player:join_room', (roomId: string, playerName: string, callback) => {
+        const room = joinRoom(roomId, socket.id, playerName);
         if (!room) {
           callback({ error: 'Room full or not found' });
           return;
@@ -39,7 +40,13 @@ export const initSocket = (httpServer: HttpServer) => {
       
         socket.join(room.id);
         console.log(`✅ Player ${socket.id} joined room ${roomId}`);
-        callback({ roomId: room.id, status: room.status });
+        // callback({ roomId: room.id, status: room.status });
+        callback({room: room});
+      });
+
+      socket.on('player:leave_room', (roomId: string, callback) => {
+        removePlayer(roomId, socket.id);
+        socket.leave(roomId)
       });
   });
 

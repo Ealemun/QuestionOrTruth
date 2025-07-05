@@ -3,12 +3,13 @@ import { STARTING_CHIPS } from '../config';
 
 const rooms: Record<string, GameRoom> = {};
 
-export function createRoom(playerId: string): GameRoom {
+export function createRoom(playerId: string, playerName: string): GameRoom {
   const player: Player = {
     id: playerId,
+    name: playerName,
     isReady: false,
-    chips: STARTING_CHIPS,
-    cards: []
+    // chips: STARTING_CHIPS,
+    // cards: []
   };
 
   const room: GameRoom = {
@@ -21,20 +22,33 @@ export function createRoom(playerId: string): GameRoom {
   return room;
 }
 
-export function joinRoom(roomId: string, playerId: string): GameRoom | null {
+export function joinRoom(roomId: string, playerId: string, playerName: string): GameRoom | null {
   const room = rooms[roomId];
   if (!room || room.players.length >= 2) return null;
 
   const player: Player = {
     id: playerId,
+    name: playerName,
     isReady: false,
-    chips: STARTING_CHIPS,
-    cards: []
+    // chips: STARTING_CHIPS,
+    // cards: []
   };
 
   room.players.push(player);
   room.status = 'ready';
   return room;
+}
+
+export function removePlayer(roomId: string, playerId: string): void {
+  const room = rooms[roomId];
+  if (!room) return;
+  room.players = room.players.filter(player => player.id !== playerId);
+  console.log(`🏃🚪Player ${playerId} removed from room ${roomId}.`);
+
+  if (room.players.length === 0) {
+    delete rooms[roomId];
+    console.log(`🗑️Room ${roomId} deleted because it is empty.`);
+  }
 }
 
 
