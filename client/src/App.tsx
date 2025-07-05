@@ -23,11 +23,9 @@ function App() {
 useEffect(() => {
   socket.on('room:update', (roomData) => {
     setRoom(roomData);
-    console.log(`Le poto ${playerName} voit l'update de la room`);
 });
   socket.on('room:kicked', () => {
     alert(t('room.kicked'));
-    console.log(`Le frérot ${playerName} s'est fait kick et il le voit`)
     setRoom(null);
   });
 
