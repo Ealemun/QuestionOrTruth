@@ -7,10 +7,10 @@ export interface Card {
 
 export interface Player {
   id: string;
-  name?: string;
+  name: string;
   isReady: boolean;
-  chips: number;
-  cards: Card[];
+  // chips: number;
+  // cards: Card[];
 }
 
 export interface GameRoom {
