@@ -2,6 +2,7 @@ import { GameRoom, Player } from '../types/game';
 import { STARTING_CHIPS } from '../config';
 
 const rooms: Record<string, GameRoom> = {};
+const playerToRoom: Record<string, string> = {};
 
 export function createRoom(playerId: string, playerName: string): GameRoom {
   const player: Player = {
@@ -15,16 +16,18 @@ export function createRoom(playerId: string, playerName: string): GameRoom {
   const room: GameRoom = {
     id: generateRoomId(),
     players: [player],
+    roomMaster: playerId,
     status: 'waiting'
   };
 
   rooms[room.id] = room;
+  playerToRoom[playerId] = room.id;
   return room;
 }
 
 export function joinRoom(roomId: string, playerId: string, playerName: string): GameRoom | null {
   const room = rooms[roomId];
-  if (!room || room.players.length >= 2) return null;
+  if (!room || room.players.length >= 3) return null;
 
   const player: Player = {
     id: playerId,
@@ -36,20 +39,43 @@ export function joinRoom(roomId: string, playerId: string, playerName: string): 
 
   room.players.push(player);
   room.status = 'ready';
+  playerToRoom[playerId] = room.id;
   return room;
 }
 
-export function removePlayer(roomId: string, playerId: string): void {
+export function promotePlayer(playerId: string): GameRoom | null {
+  const roomId = playerToRoom[playerId]
   const room = rooms[roomId];
-  if (!room) return;
+  room.roomMaster = playerId;
+  console.log(`👑 New room master for room ${roomId} is ${room.roomMaster}.`);
+
+  return room;
+}
+
+export function removePlayer(playerId: string, way: string): GameRoom | null {
+  const roomId = playerToRoom[playerId]
+  const room = rooms[roomId];
+  if (!room) return null;
+
   room.players = room.players.filter(player => player.id !== playerId);
-  console.log(`🏃🚪Player ${playerId} removed from room ${roomId}.`);
+  delete playerToRoom[playerId];
+  console.log(`🏃🚪 Player ${playerId} removed (${way}) from room ${roomId}.`);
 
   if (room.players.length === 0) {
     delete rooms[roomId];
-    console.log(`🗑️Room ${roomId} deleted because it is empty.`);
+    console.log(`🗑️ Room ${roomId} deleted because it is empty.`);
+    return null;
+  } else {
+    if(room.roomMaster === playerId){
+      promotePlayer(room.players[0].id)
+    }
   }
+
+  return rooms[roomId]
 }
+
+
+// TODO getRoom
 
 
 function generateRoomId(): string {

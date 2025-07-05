@@ -14,7 +14,11 @@
         "errorJoining": "Error: {{error}}",
         "name": "Name",
         "leave": "Leave the room",
-        "inRoom": "You are in the room: {{roomId}}"
+        "inRoom": "You are in the room: {{roomId}}",
+        "master": "Room master",
+        "makeMaster": "Promote master",
+        "kick": "Kick",
+        "kicked": "You have been kicked from the room."
       }
   }
   

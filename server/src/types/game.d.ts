@@ -16,5 +16,6 @@ export interface Player {
 export interface GameRoom {
   id: string;
   players: Player[];
+  roomMaster: string;
   status: 'waiting' | 'ready' | 'in_progress' | 'finished';
 }

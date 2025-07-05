@@ -14,7 +14,11 @@
         "errorJoining": "Erreur : {{error}}",
         "name": "Nom",
         "leave": "Quitter la salle",
-        "inRoom": "Vous êtes dans la salle: {{roomId}}"
+        "inRoom": "Vous êtes dans la salle: {{roomId}}",
+        "master": "Maître de salle",
+        "makeMaster": "Promouvoir maître",
+        "kick": "Exclure",
+        "kicked": "Vous avez été exclu de la salle."
       }
   }
   
