@@ -12,8 +12,9 @@
         "joined": "Connecté à la salle : {{roomId}}",
         "errorCreating": "Erreur lors de la création de la salle.",
         "errorJoining": "Erreur : {{error}}",
-        "name": "Nom de salle",
-        "leave": "Quitter la salle"
+        "name": "Nom",
+        "leave": "Quitter la salle",
+        "inRoom": "Vous êtes dans la salle: {{roomId}}"
       }
   }
   
