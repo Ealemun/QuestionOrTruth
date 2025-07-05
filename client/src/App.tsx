@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import MenuScreen from './MenuScreen';
 import RoomScreen from './RoomScreen';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import socket from './socket';
 
 function App() {
   const { t } = useTranslation();
@@ -19,6 +20,25 @@ function App() {
     setRoom(null);
   };
 
+useEffect(() => {
+  socket.on('room:update', (roomData) => {
+    setRoom(roomData);
+    console.log(`Le poto ${playerName} voit l'update de la room`);
+});
+  socket.on('room:kicked', () => {
+    alert(t('room.kicked'));
+    console.log(`Le frérot ${playerName} s'est fait kick et il le voit`)
+    setRoom(null);
+  });
+
+  return () => {
+    socket.off('room:update');
+    socket.off('room:kicked');
+  };
+}, [t]);
+
+
+
   return (
     <div className="App p-4">
       <LanguageSwitcher />
@@ -28,7 +48,7 @@ function App() {
       {!room ? (
         <MenuScreen onRoomJoined={handleRoomJoin} />
       ) : (
-        <RoomScreen room={room} playerName={playerName} onLeave={leaveRoom} />
+        <RoomScreen room={room} onLeave={leaveRoom} />
       )}
     </div>
   );
