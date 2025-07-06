@@ -18,7 +18,10 @@
         "master": "Maître de salle",
         "makeMaster": "Promouvoir maître",
         "kick": "Exclure",
-        "kicked": "Vous avez été exclu de la salle."
+        "kicked": "Vous avez été exclu de la salle.",
+        "ready": "Prêt",
+        "notReady": "Pas prêt",
+        "start": "Lancer la partie"
       }
   }
   

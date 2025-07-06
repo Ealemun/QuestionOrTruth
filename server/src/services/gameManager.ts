@@ -75,10 +75,26 @@ export function removePlayer(playerId: string, way: string): GameRoom | null {
 }
 
 
-// TODO getRoom
+export function toggleReady(playerId: string): GameRoom | null {
+  const roomId = playerToRoom[playerId]
+  const room = rooms[roomId];
+  if (!room) return null;
+
+  const player = room.players.find(p => p.id === playerId); // Keep this line while the number of players is low (<< 1000), else use a map
+  if (!player) return null;
+
+  player.isReady = !player.isReady;
+
+  // Check if all the players are ready
+  const allReady = room.players.length > 1 && room.players.every(p => p.isReady);
+  room.status = allReady ? 'ready' : 'waiting';
+
+  return room;
+}
+
 
 
 function generateRoomId(): string {
-    return Math.random().toString(36).substring(2, 8).toUpperCase(); // exemple : "K9X2D1"
+    return Math.random().toString(36).substring(2, 8).toUpperCase(); // example : "K9X2D1"
   }
   
