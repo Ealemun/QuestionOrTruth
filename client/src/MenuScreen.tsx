@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import socket from './socket';
+import type { GameRoom, RoomResponse} from "../../shared/types";
 
 interface Props {
-  onRoomJoined: (roomData: any, playerName: string) => void;
+  onRoomJoined: (roomData: GameRoom | null, playerName: string) => void;
 }
 
 const MenuScreen: React.FC<Props> = ({ onRoomJoined }) => {
@@ -13,8 +14,8 @@ const MenuScreen: React.FC<Props> = ({ onRoomJoined }) => {
 
   const handleCreate = () => {
     if (!playerName) return;
-    socket.emit('player:create_room', playerName, (response: any) => {
-      if (response.room) {
+    socket.emit('player:create_room', playerName, (response: RoomResponse) => {
+      if (response.success) {
         onRoomJoined(response.room, playerName);
       }
     });
@@ -22,8 +23,8 @@ const MenuScreen: React.FC<Props> = ({ onRoomJoined }) => {
 
   const handleJoin = () => {
     if (!playerName || !roomCode) return;
-    socket.emit('player:join_room', roomCode, playerName, (response: any) => {
-      if (response.error) {
+    socket.emit('player:join_room', roomCode, playerName, (response: RoomResponse) => {
+      if (!response.success) {
         alert(response.error);
       } else {
         onRoomJoined(response.room, playerName);

@@ -22,6 +22,19 @@
         "ready": "Prêt",
         "notReady": "Pas prêt",
         "start": "Lancer la partie"
-      }
+      },
+    "chat": {
+        "send": "Envoyer",
+        "placeholder": "Écrivez un message...",
+        "systemMessage": "Message système",
+        "error": "Erreur lors de l'envoi du message : {{error}}",
+        "roomCreated": "{{playerName}} a créé la salle.",
+        "joined": "{{playerName}} a rejoint la salle.",
+        "leave": "{{playerName}} a quitté la salle.",
+        "kicked": "{{playerName}} a été exclu de la salle.",
+        "disconnection": "{{playerName}} s'est déconnecté.",
+        "promoted": "{{playerName}} a été promu maître de la salle."
+        
+    }
   }
   

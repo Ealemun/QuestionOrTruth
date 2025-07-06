@@ -1,6 +1,8 @@
-// src/socket.ts
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
+import type { ClientToServerEvents, ServerToClientEvents } from '../../shared/types/socketEvents';
 
-const socket = io('http://localhost:3001'); // adapte si tu déploies plus tard
+const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io({ // ajouter 'http://localhost:3001' si besoin
+  autoConnect: false,
+});
 
 export default socket;

@@ -1,27 +1,29 @@
-import { GameRoom, Player } from '../types/game';
+import { ChatMessage, GameRoom, Player } from "../../../shared/types";
 import { STARTING_CHIPS } from '../config';
 
 const rooms: Record<string, GameRoom> = {};
 const playerToRoom: Record<string, string> = {};
 
 export function createRoom(playerId: string, playerName: string): GameRoom {
-  const player: Player = {
-    id: playerId,
-    name: playerName,
-    isReady: false,
-    // chips: STARTING_CHIPS,
-    // cards: []
-  };
+  const roomId = generateRoomId();
+  const roomCreationMessage: ChatMessage = {
+    system: true,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    messageKey: "chat.roomCreated",
+    messageParams: { roomId: roomId, playerName: playerName }
+  }
 
   const room: GameRoom = {
-    id: generateRoomId(),
-    players: [player],
+    id: roomId,
+    players: [],
     roomMaster: playerId,
-    status: 'waiting'
+    status: 'waiting',
+    messages: [roomCreationMessage],
   };
 
   rooms[room.id] = room;
-  playerToRoom[playerId] = room.id;
+  joinRoom(roomId, playerId, playerName);
+
   return room;
 }
 
@@ -37,22 +39,40 @@ export function joinRoom(roomId: string, playerId: string, playerName: string): 
     // cards: []
   };
 
+  const joinMessage: ChatMessage = {
+    system: true,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    messageKey: 'chat.joined', // key for the frontend
+    messageParams: { name: playerName }
+  };
+
   room.players.push(player);
-  room.status = 'ready';
+  room.messages.push(joinMessage);
   playerToRoom[playerId] = room.id;
   return room;
 }
 
-export function promotePlayer(playerId: string): GameRoom | null {
+export function promotePlayer(playerId: string, playerName: string): GameRoom | null { // on demande le nom pour le message
   const roomId = playerToRoom[playerId]
   const room = rooms[roomId];
   room.roomMaster = playerId;
   console.log(`👑 New room master for room ${roomId} is ${room.roomMaster}.`);
-
+  
+  room.messages.push({
+    system: true,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    messageKey: 'chat.promoted',
+    messageParams: { name: playerName }
+  });
+  
   return room;
 }
 
-export function removePlayer(playerId: string, way: string): GameRoom | null {
+export function removePlayer(playerId: string | undefined, way: string, playerName?: string): GameRoom | null {
+  if (playerId === undefined) {
+    console.warn("🚨 Attempted to remove a player with undefined ID.");
+    return null;
+  }
   const roomId = playerToRoom[playerId]
   const room = rooms[roomId];
   if (!room) return null;
@@ -61,13 +81,24 @@ export function removePlayer(playerId: string, way: string): GameRoom | null {
   delete playerToRoom[playerId];
   console.log(`🏃🚪 Player ${playerId} removed (${way}) from room ${roomId}.`);
 
+  if (!playerName) {
+    playerName = room.players.find(p => p.id === playerId)?.name || 'Unknown';
+  }
+
+  const leaveMessage: ChatMessage = {
+    system: true,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    messageKey: `chat.${way}`, // ways: "leave", "kick", "disconnection"
+    messageParams: { name: playerName }
+  };
+
   if (room.players.length === 0) {
     delete rooms[roomId];
     console.log(`🗑️ Room ${roomId} deleted because it is empty.`);
     return null;
   } else {
     if(room.roomMaster === playerId){
-      promotePlayer(room.players[0].id)
+      promotePlayer(room.players[0].id, room.players[0].name); // Promote the first player in the list to room master
     }
   }
 
@@ -92,7 +123,13 @@ export function toggleReady(playerId: string): GameRoom | null {
   return room;
 }
 
-
+export function addMessage(roomId: string, message: ChatMessage): GameRoom | null {
+  const room = rooms[roomId];
+  if (!room) return null;
+  
+  room.messages.push(message);
+  return room;
+}
 
 function generateRoomId(): string {
     return Math.random().toString(36).substring(2, 8).toUpperCase(); // example : "K9X2D1"
