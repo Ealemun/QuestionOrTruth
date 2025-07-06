@@ -5,17 +5,37 @@ export interface Card {
   suit: Suit;
 }
 
-export interface Player {
-  id: string;
-  name: string;
-  isReady: boolean;
-  // chips: number;
-  // cards: Card[];
-}
+// export interface Player {
+//   id: string;
+//   name: string;
+//   isReady: boolean;
+//   // chips: number;
+//   // cards: Card[];
+// }
 
-export interface GameRoom {
-  id: string;
-  players: Player[];
-  roomMaster: string;
-  status: 'waiting' | 'ready' | 'in_progress' | 'finished';
-}
+// export interface GameRoom {
+//   id: string;
+//   players: Player[];
+//   roomMaster: string;
+//   status: 'waiting' | 'ready' | 'in_progress' | 'finished';
+//   messages: ChatMessage[];
+// }
+
+// interface PlayerMessage {
+//   time: string;
+//   system?: false;
+//   senderId: string;
+//   senderName: string;
+//   text: string;
+// }
+
+// interface SystemMessage {
+//   time: string;
+//   system: true;
+//   messageKey: string;
+//   messageParams?: Record<string, string>;
+//   text?: string; // fallback
+// }
+
+// export type ChatMessage = PlayerMessage | SystemMessage;
+

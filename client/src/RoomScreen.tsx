@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import socket from './socket';
 import { useTranslation } from 'react-i18next';
 
@@ -10,18 +10,19 @@ interface Props {
 
 const RoomScreen: React.FC<Props> = ({ room, onLeave }) => {
   const { t } = useTranslation();
+  const [newMessage, setNewMessage] = useState('');
 
   const leaveRoom = () => {
     socket.emit('player:leave_room', room.id, socket.id);
     onLeave();
   };
 
-  const handleKick = (roomId: string, playerId: string) => {
-    socket.emit('player:kick_player', roomId, playerId);
+  const handleKick = (roomId: string, playerId: string, playerName: string) => {
+    socket.emit('player:kick_player', roomId, playerId, playerName);
   };
 
-  const handlePromote = (roomId: string, playerId: string) => {
-    socket.emit('player:promote_master', roomId, playerId)
+  const handlePromote = (roomId: string, playerId: string, playerName:string) => {
+    socket.emit('player:promote_master', roomId, playerId, playerName)
   }
 
   const toggleReady = () => {
@@ -65,13 +66,13 @@ const RoomScreen: React.FC<Props> = ({ room, onLeave }) => {
           {room.roomMaster === socket.id && p.id !== socket.id && (
             <div className="flex gap-2">
               <button
-                onClick={() => handlePromote(room.id, p.id)}
+                onClick={() => handlePromote(room.id, p.id, p.name)}
                 className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
               >
                 {t('room.makeMaster')}
               </button>
               <button
-                onClick={() => handleKick(room.id, p.id)}
+                onClick={() => handleKick(room.id, p.id, p.name)}
                 className="text-xs bg-red-500 text-white px-2 py-1 rounded"
               >
                 {t('room.kick')}
@@ -81,6 +82,47 @@ const RoomScreen: React.FC<Props> = ({ room, onLeave }) => {
           </li>
         ))}
       </ul>
+
+      <div className="mt-4 border-t pt-2">
+        <h3 className="font-semibold">{t('chat.title')}</h3>
+        <div className="max-h-64 overflow-y-auto mb-2">
+          {room.messages.map((msg: any, i: number) => (
+            <div key={i} className={msg.system ? 'text-gray-500 italic text-sm' : 'text-sm'}>
+              <span className="text-xs text-gray-400 mr-2">[{msg.time}]</span>
+              {msg.system
+              ? String(t(`${msg.messageKey}`, msg.messageParams))
+              : <><strong>{msg.senderName}:</strong> {msg.text}</>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (newMessage.trim()) {
+            socket.emit('chat:message', {
+              roomId: room.id,
+              //TODO add senderName
+              text: newMessage,
+            });
+            setNewMessage('');
+          }
+        }}
+        className="flex gap-2"
+      >
+        <input
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          className="flex-1 border rounded p-1 text-sm"
+          placeholder={t('chat.placeholder')}
+        />
+        <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+          {t('chat.send')}
+        </button>
+      </form>
+
+
 
       <div className="space-y-2">
         {/* Lancer la partie */}
