@@ -18,7 +18,10 @@
         "master": "Room master",
         "makeMaster": "Promote master",
         "kick": "Kick",
-        "kicked": "You have been kicked from the room."
+        "kicked": "You have been kicked from the room.",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "start": "Start Game"
       }
   }
   

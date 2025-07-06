@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { createRoom, joinRoom, removePlayer, promotePlayer } from './services/gameManager';
+import { createRoom, joinRoom, removePlayer, promotePlayer, toggleReady } from './services/gameManager';
 
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -74,6 +74,13 @@ export const initSocket = (httpServer: HttpServer) => {
         const updatedRoom = removePlayer(targetPlayerId, "kick"); // même fonction
         if (updatedRoom) {
           io.to(roomId).emit('room:update', updatedRoom);
+        }
+      });
+
+      socket.on('player:toggle_ready', () => {
+        const room = toggleReady(socket.id);
+        if (room) {
+          io.to(room.id).emit('room:update', room);
         }
       });
 
