@@ -16,6 +16,7 @@ const MenuScreen: React.FC<Props> = ({ onRoomJoined }) => {
     if (!playerName) return;
     socket.emit('player:create_room', playerName, (response: RoomResponse) => {
       if (response.success) {
+        console.log(`Room created: ${response.room.id}`);
         onRoomJoined(response.room, playerName);
       }
     });

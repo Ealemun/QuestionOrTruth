@@ -31,10 +31,10 @@
         "roomCreated": "{{playerName}} a créé la salle.",
         "joined": "{{playerName}} a rejoint la salle.",
         "leave": "{{playerName}} a quitté la salle.",
-        "kicked": "{{playerName}} a été exclu de la salle.",
+        "kick": "{{playerName}} a été exclu de la salle.",
         "disconnection": "{{playerName}} s'est déconnecté.",
-        "promoted": "{{playerName}} a été promu maître de la salle."
-        
+        "promoted": "{{playerName}} a été promu maître de la salle.",
+        "title": "Chat"        
     }
   }
   

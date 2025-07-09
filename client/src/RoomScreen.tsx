@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import socket from './socket';
 import { useTranslation } from 'react-i18next';
+import type { GameRoom } from '../../shared/types';
+import ChatBox from './ChatBox';
 
 interface Props {
-  room: any;
+  room: GameRoom;
+  playerName: string;
   // playerName: string;
   onLeave: () => void;
 }
 
-const RoomScreen: React.FC<Props> = ({ room, onLeave }) => {
+const RoomScreen: React.FC<Props> = ({ room, playerName, onLeave }) => {
   const { t } = useTranslation();
-  const [newMessage, setNewMessage] = useState('');
 
   const leaveRoom = () => {
-    socket.emit('player:leave_room', room.id, socket.id);
+    socket.emit('player:leave_room', room.id, playerName);
     onLeave();
   };
 
@@ -83,44 +85,16 @@ const RoomScreen: React.FC<Props> = ({ room, onLeave }) => {
         ))}
       </ul>
 
-      <div className="mt-4 border-t pt-2">
-        <h3 className="font-semibold">{t('chat.title')}</h3>
-        <div className="max-h-64 overflow-y-auto mb-2">
-          {room.messages.map((msg: any, i: number) => (
-            <div key={i} className={msg.system ? 'text-gray-500 italic text-sm' : 'text-sm'}>
-              <span className="text-xs text-gray-400 mr-2">[{msg.time}]</span>
-              {msg.system
-              ? String(t(`${msg.messageKey}`, msg.messageParams))
-              : <><strong>{msg.senderName}:</strong> {msg.text}</>}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (newMessage.trim()) {
-            socket.emit('chat:message', {
-              roomId: room.id,
-              //TODO add senderName
-              text: newMessage,
-            });
-            setNewMessage('');
-          }
-        }}
-        className="flex gap-2"
-      >
-        <input
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          className="flex-1 border rounded p-1 text-sm"
-          placeholder={t('chat.placeholder')}
-        />
-        <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded text-sm">
-          {t('chat.send')}
-        </button>
-      </form>
+      <ChatBox
+        messages={room.messages}
+        onSend={(text) =>
+          socket.emit('chat:message', {
+            roomId: room.id,
+            senderName: playerName,
+            text,
+          })
+        }
+      />
 
 
 

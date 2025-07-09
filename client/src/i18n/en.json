@@ -31,9 +31,10 @@
         "roomCreated": "{{playerName}} created the room.",
         "joined": "{{playerName}} joined the room.",
         "leave": "{{playerName}} left the room.",
-        "kicked": "{{playerName}} was kicked from the room.",
+        "kick": "{{playerName}} was kicked from the room.",
         "disconnection": "{{playerName}} disconnected.",
-        "promoted": "{{playerName}} was promoted to room master."
+        "promoted": "{{playerName}} was promoted to room master.",
+        "title": "Chat"
     }
   }
   
