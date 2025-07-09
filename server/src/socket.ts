@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { createRoom, joinRoom, removePlayer, promotePlayer, toggleReady, addMessage } from './services/roomManager';
+import { createRoom, joinRoom, removePlayer, promotePlayer, toggleReady, addMessage, isMaster } from './services/roomManager';
 import { ChatMessage, ClientToServerEvents, ServerToClientEvents } from '../../shared/types';
 
 export const initSocket = (httpServer: HttpServer) => {
@@ -49,33 +49,53 @@ export const initSocket = (httpServer: HttpServer) => {
       
     });
 
-    socket.on('player:leave_room', (roomId: string, playerId: string | undefined) => {
-      const room = removePlayer(playerId, "leave");
+    socket.on('player:leave_room', (roomId: string, playerName: string) => {
+      const playerId = socket.id
+      const room = removePlayer(playerId, "leave", playerName);
       socket.leave(roomId)
       if (room) {
         io.to(roomId).emit('room:update', room);
       }
     });
 
-    socket.on('player:promote_master', (roomId: string, playerId: string, playerName: string) => {
-      const room = promotePlayer(playerId, playerName);
-      if (room) {
-        io.to(roomId).emit('room:update', room);
+    socket.on('player:promote_master', (roomId: string, targetPlayerId: string, targetPlayerName: string) => {
+      if (!isMaster(roomId, socket.id)) {
+        console.log(`❌ Player ${socket.id} tried to promote a master in room ${roomId}`);
+        socket.emit('error', { message: 'Not authorized' });
+        return;
+      }else if (targetPlayerId === socket.id) {
+        console.log(`❌ Player ${socket.id} tried to promote themselves as master in room ${roomId}`);
+        socket.emit('error', { message: 'Cannot promote yourself' });
+        return;
+      } else {
+        const room = promotePlayer(targetPlayerId, targetPlayerName);
+        if (room) {
+          io.to(roomId).emit('room:update', room);
+        }
       }
     });
 
-    socket.on('player:kick_player', (roomId: string, targetPlayerId: string) => {
-      
-      const kickedSocket = io.sockets.sockets.get(targetPlayerId);
-      if (kickedSocket) {
-        kickedSocket.emit('room:kicked'); // 👈 frontend réagit à ça
-        kickedSocket.leave(roomId);
-        console.log(`On envoie un room:kicked à ${targetPlayerId}`)
-      }
+    socket.on('player:kick_player', (roomId: string, targetPlayerId: string, playerName: string) => {
+      if (!isMaster(roomId, socket.id)) {
+        console.log(`❌ Player ${socket.id} tried to kick ${targetPlayerId} in room ${roomId}`);
+        socket.emit('error', { message: 'Not authorized' });
+        return;
+      }else if (targetPlayerId === socket.id) {
+        console.log(`❌ Player ${socket.id} tried to kick themselves in room ${roomId}`);
+        socket.emit('error', { message: 'Cannot kick yourself' });
+        return;
+      } else {
+        const kickedSocket = io.sockets.sockets.get(targetPlayerId);
+        if (kickedSocket) {
+          kickedSocket.emit('room:kicked'); // 👈 frontend réagit à ça
+          kickedSocket.leave(roomId);
+          console.log(`On envoie un room:kicked à ${targetPlayerId}`)
+        }
 
-      const updatedRoom = removePlayer(targetPlayerId, "kick"); // même fonction
-      if (updatedRoom) {
-        io.to(roomId).emit('room:update', updatedRoom);
+        const updatedRoom = removePlayer(targetPlayerId, "kick", playerName); // même fonction
+        if (updatedRoom) {
+          io.to(roomId).emit('room:update', updatedRoom);
+        }
       }
     });
 
@@ -87,18 +107,19 @@ export const initSocket = (httpServer: HttpServer) => {
     });
 
 
-    socket.on('chat:message', ({roomId, text}) => {
+    socket.on('chat:message', ({roomId, senderName, text}) => {
       const message: ChatMessage = {
         senderId: socket.id,
-        senderName: "Jérôme", // TODO: get real sender name
+        senderName: senderName,
         text: text,
         time: formatTime(),
       };
 
-      // const room = addMessage(roomId, message);
-      // if (room) {
-      //   io.to(roomId).emit('chat:new_message', message);
-      // }
+      const updatedRoom = addMessage(roomId, message);
+      if (updatedRoom) {
+        io.to(roomId).emit('room:update', updatedRoom);
+        console.log(JSON.stringify(updatedRoom.messages, null, 2));
+      }
     });
 
   });

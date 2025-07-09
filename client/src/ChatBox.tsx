@@ -64,19 +64,3 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages, onSend }) => {
 };
 
 export default ChatBox;
-
-
-// import ChatBox from './ChatBox'; // adapte le chemin
-
-// // ... à mettre dans RoomScreen.tsx
-
-// <ChatBox
-//   messages={room.messages}
-//   onSend={(text) =>
-//     socket.emit('chat:message', {
-//       roomId: room.id,
-//       senderId: socket.id,
-//       text,
-//     })
-//   }
-// />

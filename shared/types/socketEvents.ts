@@ -1,8 +1,9 @@
-import type { GameRoom, RoomResponse, ChatMessage } from './';
+import type { GameRoom, RoomResponse } from './';
 
 export interface ServerToClientEvents {
   'room:update': (room: GameRoom) => void;
   'room:kicked': () => void;
+  'error': (error: { message: string }) => void;
 //   'chat:message': (message: ChatMessage) => void;
   // autres événements émis du serveur vers le client
 }
@@ -19,17 +20,17 @@ export interface ClientToServerEvents {
     callback: (res: RoomResponse) => void
   ) => void;
 
-  'player:leave_room': (roomId: string, playerId: string | undefined) => void; // TODO add playerName
+  'player:leave_room': (roomId: string, playerName: string) => void; 
 
   'player:promote_master': (roomId: string, playerId: string, playerName: string) => void;
 
-  'player:kick_player': (roomId: string, playerId: string, playerName?: string) => void;
+  'player:kick_player': (roomId: string, playerId: string, playerName: string) => void;
 
   'player:toggle_ready': () => void;
 
   'chat:message': (data: {
-    roomId: string;// TODO add senderName
-    // senderName: string, // TODO add senderName
+    roomId: string;
+    senderName: string, 
     text: string;
   }) => void;
 

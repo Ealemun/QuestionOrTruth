@@ -5,13 +5,14 @@ import MenuScreen from './MenuScreen';
 import RoomScreen from './RoomScreen';
 import { useState, useEffect } from 'react';
 import socket from './socket';
+import type { GameRoom } from '../../shared/types';
 
 function App() {
   const { t } = useTranslation();
   const [playerName, setPlayerName] = useState('');
   const [room, setRoom] = useState<any>(null);
 
-  const handleRoomJoin = (roomData: any, name: string) => {
+  const handleRoomJoin = (roomData: GameRoom | null, name: string) => {
     setPlayerName(name);
     setRoom(roomData);
   };
@@ -21,6 +22,9 @@ function App() {
   };
 
 useEffect(() => {
+  if (!socket.connected) {
+    socket.connect();
+  }
   socket.on('room:update', (roomData) => {
     setRoom(roomData);
 });
@@ -46,7 +50,7 @@ useEffect(() => {
       {!room ? (
         <MenuScreen onRoomJoined={handleRoomJoin} />
       ) : (
-        <RoomScreen room={room} onLeave={leaveRoom} />
+        <RoomScreen room={room} playerName={playerName} onLeave={leaveRoom} />
       )}
     </div>
   );

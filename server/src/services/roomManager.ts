@@ -43,7 +43,7 @@ export function joinRoom(roomId: string, playerId: string, playerName: string): 
     system: true,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     messageKey: 'chat.joined', // key for the frontend
-    messageParams: { name: playerName }
+    messageParams: { playerName: playerName }
   };
 
   room.players.push(player);
@@ -57,13 +57,13 @@ export function promotePlayer(playerId: string, playerName: string): GameRoom | 
   const room = rooms[roomId];
   room.roomMaster = playerId;
   console.log(`👑 New room master for room ${roomId} is ${room.roomMaster}.`);
-  
-  room.messages.push({
+  const promotionMessage: ChatMessage = {
     system: true,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     messageKey: 'chat.promoted',
-    messageParams: { name: playerName }
-  });
+    messageParams: { playerName: playerName }
+  }
+  room.messages.push(promotionMessage);
   
   return room;
 }
@@ -77,20 +77,21 @@ export function removePlayer(playerId: string | undefined, way: string, playerNa
   const room = rooms[roomId];
   if (!room) return null;
 
-  room.players = room.players.filter(player => player.id !== playerId);
-  delete playerToRoom[playerId];
-  console.log(`🏃🚪 Player ${playerId} removed (${way}) from room ${roomId}.`);
-
   if (!playerName) {
     playerName = room.players.find(p => p.id === playerId)?.name || 'Unknown';
   }
+
+  room.players = room.players.filter(player => player.id !== playerId);
+  delete playerToRoom[playerId];
+  console.log(`🏃🚪 Player ${playerId} removed (${way}) from room ${roomId}.`);
 
   const leaveMessage: ChatMessage = {
     system: true,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     messageKey: `chat.${way}`, // ways: "leave", "kick", "disconnection"
-    messageParams: { name: playerName }
+    messageParams: { playerName: playerName }
   };
+  room.messages.push(leaveMessage);
 
   if (room.players.length === 0) {
     delete rooms[roomId];
@@ -129,6 +130,12 @@ export function addMessage(roomId: string, message: ChatMessage): GameRoom | nul
   
   room.messages.push(message);
   return room;
+}
+
+export function isMaster(roomId: string, playerId: string): boolean {
+  const room = rooms[roomId];
+  if (!room) return false;
+  return room.roomMaster === playerId;
 }
 
 function generateRoomId(): string {
