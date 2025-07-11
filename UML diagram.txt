@@ -1,0 +1,59 @@
+classDiagram
+  class Player {
+    +string id
+    +string name
+    +boolean isReady
+  }
+
+  class PlayerMessage {
+    +string time
+    +false system (optional)
+    +string senderId
+    +string senderName
+    +string text
+  }
+
+  class SystemMessage {
+    +string time
+    +true system
+    +string messageKey
+    +Record<string, string> messageParams (optional)
+    +string text (optional)
+  }
+
+  class ChatMessage {
+    <<interface>>
+  }
+
+  class GameRoom {
+    +string id
+    +Player[] players
+    +string roomMaster
+    +string status
+    +ChatMessage[] messages
+    +IGameEngine gameEngine
+  }
+
+  class IGameEngine {
+    <<interface>>
+    +void applyAction(string playerId, object action)
+    +object getObservation(string playerId)
+    +boolean isTerminal()
+    +string getCurrentPlayer()
+    +string getGameStatus()
+  }
+
+  class QuestionVeriteGameEngine {
+    +applyAction()
+    +getObservation()
+    +isTerminal()
+    +getCurrentPlayer()
+    +getGameStatus()
+  }
+
+  GameRoom "1" o-- "*" Player
+  GameRoom "1" o-- "*" ChatMessage
+  GameRoom "1" --> IGameEngine
+  IGameEngine <|.. QuestionVeriteGameEngine
+  ChatMessage <|-- PlayerMessage
+  ChatMessage <|-- SystemMessage
