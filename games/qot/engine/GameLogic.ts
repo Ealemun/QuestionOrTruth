@@ -1,5 +1,5 @@
 import type { PlayerId, Card, GameAction, GamePhase, GameObservation, Value, Suit, Question, QuestionResponse, PlayerState } from "../types"
-import { NB_CARDS_TO_GUESS, STARTING_CHIPS } from "../config"
+import { LOW_CHIPS_THRESHOLD, NB_CARDS_TO_GUESS, STARTING_CHIPS } from "../config"
 import { IQuestionOrTruthGame } from "../engine/IGameLogic";
 import { isFigure, isNumerical } from "../utils";
 
@@ -10,6 +10,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
   private currentTurn: number
   private bets: Record<PlayerId, number>
   private phase: GamePhase
+  private betWinner: PlayerId | null
   private winner: PlayerId | null
  
   constructor(players: PlayerId[]) {
@@ -18,6 +19,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     this.currentTurn = 0
     this.bets = {}
     this.phase = "SETUP"
+    this.betWinner = null
     this.winner = null
 
     players.forEach(pid => {
@@ -25,7 +27,8 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
         hand: [],
         chips: STARTING_CHIPS,
         revealedInfo: [],
-        hasSubmitted: false
+        hasSubmitted: false,
+        lowChips: false, // Will be set to true if the player has less than LOW_CHIPS_THRESHOLD chips
       }
     })
   }
@@ -49,8 +52,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     this.playerStates[playerId].hasSubmitted = true // TODO reset hasSubmitted at each phase
 
     if (this.allPlayersReady()) {
-      this.phase = "BETTING"
-      this.resetSubmitted()
+      this.turnPhase("BETTING")
       this.currentTurn = 1
     }
 
@@ -58,18 +60,29 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
   }
 
 
-  public applyAction(playerId: PlayerId, action: GameAction): void { // TODO check that the bet amount is valid
+  public applyAction(playerId: PlayerId, action: GameAction): { success: true } | { success: false; reason: string } { // TODO check that the GameAction is valid
+    if (!this.checkGameActionValidity(action)) {
+      return { success: false, reason: "Invalid action for the current phase." }
+    }
     if (this.phase === "BETTING") {
       this.bets[playerId] = action.bet ?? 0
-      this.playerStates[playerId].hasSubmitted = true
+      if (action.bet === undefined || action.bet < 0 || action.bet > this.playerStates[playerId].chips) {
+        return { success: false, reason: "Invalid bet amount." }
+      }
+      this.playerStates[playerId].hasSubmitted = true 
 
       if (this.allPlayersReady()) {
         this.resolveBettingPhase()
       }
-    } else if (this.phase === "RESOLUTION" && playerId === this.getTurnWinner()) {
-      this.resolvePlayerAction(playerId, action)
-      this.prepareNextTurn()
+      return { success: true }
+    } else if (this.phase === "RESOLUTION" && playerId === this.getBetWinner()) {
+      this.resolvePlayerAction(playerId, action) // TODO check if the question is valid
+      if (!this.isGameOver){
+        this.prepareNextTurn()
+      }
+      return { success: true }
     }
+    return { success: false, reason: "Action not allowed in current phase." }
   }
 
 
@@ -122,8 +135,13 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     this.playerStates[p1].chips -= b1
     this.playerStates[p2].chips -= b2
 
-    if (b1 > b2) this.phase = "RESOLUTION"
-    else if (b2 > b1) this.phase = "RESOLUTION"
+    this.playerStates[p1].lowChips = this.playerStates[p1].chips <= LOW_CHIPS_THRESHOLD
+    this.playerStates[p2].lowChips = this.playerStates[p2].chips <= LOW_CHIPS_THRESHOLD
+
+    if (b1 !== b2) {
+      this.turnPhase("RESOLUTION")
+      this.updateBetWinner()
+    }
     else this.prepareNextTurn()
   }
 
@@ -132,20 +150,24 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
    * @param playerId - The ID of the player whose action is being resolved.
    * @param action - The action to resolve, which can be a question or a truth guess.
   */
-  private resolvePlayerAction(playerId: PlayerId, action: GameAction): void {
+  private resolvePlayerAction(playerId: PlayerId, action: GameAction): {success: boolean, answer?: boolean | QuestionResponse} {
     // Résoudre Question ou Vérité
     const state = this.playerStates[playerId]
     if (action.type === "truth") {
       const isCorrect = this.checkTruth(playerId, action.guess!)
       if (isCorrect) {
         this.winner = playerId
-        this.phase = "END"
+        this.turnPhase("END")
+        return {success: true, answer: true}
       }
+      return {success: true, answer: false}
     } else if (action.type === "question") {
       const opponentId = this.getOpponent(playerId)
       const response = this.answerQuestion(opponentId, action.question!)
       state.revealedInfo.push(response)
+      return {success: true, answer: response}
     }
+    return {success: false}
   }
 
   
@@ -157,23 +179,59 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     const [p1, p2] = this.players
     this.playerStates[p1].chips += 2
     this.playerStates[p2].chips += 2
+
+    this.playerStates[p1].lowChips = this.playerStates[p1].chips <= LOW_CHIPS_THRESHOLD
+    this.playerStates[p2].lowChips = this.playerStates[p2].chips <= LOW_CHIPS_THRESHOLD
+
     this.bets = {}
-    this.phase = "BETTING"
+    this.turnPhase("BETTING")
     this.currentTurn += 1
-    this.resetSubmitted()
+    this.betWinner = null // Reset the bet winner for the next turn
   }
 
-    /**
-   * @brief Checks if a guess made by a player is correct.
-   * @param guesserId - The ID of the player making the guess.
-   * @param guess - The array of cards guessed by the player.
-   * @returns True if the guess is correct, false otherwise.
-   */
-  private checkTruth(guesserId: PlayerId, guess: Value[]): boolean {
-    const opponentId = this.getOpponent(guesserId)
-    const target = this.playerStates[opponentId].hand
-    return target.every((card, i) => card.rank === guess[i])
-  }
+
+    /** 
+     * @brief Checks if the action is valid for the current game phase.
+     * @param action - The action to validate.
+     * @return True if the action is valid, false otherwise.
+     */
+    private checkGameActionValidity(action: GameAction): boolean {
+      if (this.phase === "BETTING") {
+        return action.type === "bet" && typeof action.bet === "number"
+      } else if (this.phase === "RESOLUTION") {
+          switch (action.type) {
+          case "bet":
+            return false // Betting is not allowed in resolution phase
+          case "question":
+            if (!action.question) return false
+            if (action.question.type === "SUM") {
+              if (action.question.variant === "positions") {
+                for (const i of action.question.positions) {
+                  if (i < 0 || i >= NB_CARDS_TO_GUESS) {
+                    // throw new Error(`Invalid card index: ${i}`);
+                    return false
+                  }
+                }
+              }
+            }
+          case "truth":
+            return action.guess?.length === NB_CARDS_TO_GUESS
+          }
+      }
+      return false
+    }
+
+      /**
+     * @brief Checks if a guess made by a player is correct.
+     * @param guesserId - The ID of the player making the guess.
+     * @param guess - The array of cards guessed by the player.
+     * @returns True if the guess is correct, false otherwise.
+     */
+    private checkTruth(guesserId: PlayerId, guess: Value[]): boolean {
+      const opponentId = this.getOpponent(guesserId)
+      const target = this.playerStates[opponentId].hand
+      return target.every((card, i) => card.rank === guess[i])
+    }
 
     /**
    * @brief Answers a question posed by an opponent.
@@ -188,28 +246,28 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     case 'SUM':
       switch (question.variant) {
         case 'positions':
-          for (const i of question.positions) {
-            if (i < 0 || i >= NB_CARDS_TO_GUESS) {
-              throw new Error(`Invalid card index: ${i}`);
-            }
-          }
+          // for (const i of question.positions) {
+          //   if (i < 0 || i >= NB_CARDS_TO_GUESS) {
+          //     throw new Error(`Invalid card index: ${i}`);
+          //   }
+          // }
           const values = question.positions.map(i => hand[i]?.rank ?? 0);
-          return { type: 'SUM', value: values.reduce((a, b) => a + b, 0) };
+          return { question: question, value: values.reduce((a, b) => a + b, 0) };
         case 'color':
           return {
-            type: 'SUM',
+            question: question,
             value: hand
               .filter(c => c.suit === question.suit)
               .reduce((sum, c) => sum + c.rank, 0),
           };
         case 'figures':
           return {
-            type: 'SUM',
+            question: question,
             value: hand.filter(c => isFigure(c.rank)).reduce((sum, c) => sum + c.rank, 0),
           };
         case 'numerical':
           return {
-            type: 'SUM',
+            question: question,
             value: hand.filter(c => isNumerical(c.rank)).reduce((sum, c) => sum + c.rank, 0),
           };
       }
@@ -217,28 +275,28 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     case 'COUNT':
       switch (question.variant) {
         case 'figures':
-          return { type: 'COUNT', value: hand.filter(c => isFigure(c.rank)).length };
+          return { question: question, value: hand.filter(c => isFigure(c.rank)).length };
         case 'numerical':
-          return { type: 'COUNT', value: hand.filter(c => isNumerical(c.rank)).length };
+          return { question: question, value: hand.filter(c => isNumerical(c.rank)).length };
         case 'value':
-          return { type: 'COUNT', value: hand.filter(c => c.rank === question.rank).length };
+          return { question: question, value: hand.filter(c => c.rank === question.rank).length };
       }
 
     case 'POSITION':
       switch (question.variant) {
         case 'color':
           return {
-            type: 'POSITION',
+            question: question,
             positions: hand.map((c, i) => (c.suit === question.suit ? i : -1)).filter(i => i >= 0),
           };
         case 'value':
           return {
-            type: 'POSITION',
+            question: question,
             positions: hand.map((c, i) => (c.rank === question.rank ? i : -1)).filter(i => i >= 0),
           };
         case 'consecutive':
           return {
-            type: 'POSITION',
+            question: question,
             positions: hand
               .map((c, i) => ({ i, val: c.rank }))
               .sort((a, b) => a.val - b.val)
@@ -248,13 +306,13 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
         case 'max':
           const max = Math.max(...hand.map(c => c.rank));
           return {
-            type: 'POSITION',
+            question: question,
             positions: hand.map((c, i) => (c.rank === max ? i : -1)).filter(i => i >= 0),
           };
         case 'min':
           const min = Math.min(...hand.map(c => c.rank));
           return {
-            type: 'POSITION',
+            question: question,
             positions: hand.map((c, i) => (c.rank === min ? i : -1)).filter(i => i >= 0),
           };
       }
@@ -293,6 +351,31 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
   }
 
   /**
+   * @brief Sets the game phase and resets player submissions.
+   * @param phase - The new game phase to set.
+   */
+  private turnPhase(phase: GamePhase): void {
+    this.phase = phase
+    this.resetSubmitted()
+  }
+
+  /**
+   * @brief Updates the bet winner based on the current bets.
+   * This function determines which player has the higher bet and sets them as the bet winner.
+   */
+  private updateBetWinner(): void {
+    const [p1, p2] = this.players
+    const b1 = this.bets[p1]
+    const b2 = this.bets[p2]
+
+    if (b1 > b2){
+        this.betWinner = p1
+      } else {
+        this.betWinner = p2
+       } 
+    }
+
+  /**
    * @brief Gets the current observation for a specific player.
    * @param pid - The ID of the player for whom the observation is requested.
    * @returns An object containing the game state relevant to the player.
@@ -308,8 +391,8 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
       hand: state.hand,
       chips: state.chips,
       revealedInfo: state.revealedInfo,
-      opponentChipsKnownLow: opponentState.chips < 5,
-      canAct: this.phase === "RESOLUTION" ? this.getTurnWinner() === pid : true
+      opponentChipsKnownLow: opponentState.chips <= LOW_CHIPS_THRESHOLD, // TODO check if it's needed only here
+      canAct: this.phase === "RESOLUTION" ? this.getBetWinner() === pid : true
     }
   }
 
@@ -317,12 +400,16 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
    * @brief Determines the winner of the current turn based on player bets.
    * @returns The ID of the player who won the turn, or null if there is no winner.
    */
-  public getTurnWinner(): PlayerId | null {
-    const [p1, p2] = this.players
-    if (!this.bets[p1] || !this.bets[p2]) return null
-    if (this.bets[p1] > this.bets[p2]) return p1
-    if (this.bets[p2] > this.bets[p1]) return p2
-    return null
+  public getBetWinner(): PlayerId | null {
+    return this.betWinner
+  }
+
+  /**
+   * @brief Gets the winner of the game.
+   * @returns The ID of the player who won the game, or null if there is no winner yet.
+   */
+  public getWinner(): PlayerId | null {
+    return this.winner
   }
 
   /**
@@ -334,3 +421,12 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
   }
 
 }
+
+
+    // - setup.test.ts               (constructor, setPlayerCards)
+    // - validation.test.ts          (validateCardOrder)
+    // - bettingPhase.test.ts        (applyAction, resolveBettingPhase)
+    // - playerAction.test.ts        (resolvePlayerAction, prepareNextTurn, checkTruth)
+    // - questions.test.ts           (answerQuestion)
+    // - internals.test.ts           (resetSubmitted, allPlayersReady, getOpponent, getBetWinner, isGameOver)
+    // - observation.test.ts         (getObservationForPlayer)
