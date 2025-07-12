@@ -18,6 +18,7 @@ export type PlayerState = {
   chips: number
   revealedInfo: QuestionResponse[] // à détailler
   hasSubmitted: boolean
+  lowChips: boolean // si l'adversaire a moins de 5 jetons
 }
 
 export type GamePhase = "SETUP" | "BETTING" | "RESOLUTION" | "END"
@@ -55,6 +56,5 @@ export type Question =
   | { type: 'POSITION'; variant: 'min' }
 
 export type QuestionResponse =
-  | { type: 'SUM'; value: number }
-  | { type: 'COUNT'; value: number }
-  | { type: 'POSITION'; positions: number[] }
+  | { question: Question; value: number } // SUM and COUNT
+  | { question: Question; positions: number[] } // POSITION

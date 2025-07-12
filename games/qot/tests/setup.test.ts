@@ -1,38 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { QuestionOrTruthGame } from '../engine/GameLogic'
-import { Card, Suit, Value } from '../types'
+import { STARTING_CHIPS } from '../config'
+import {
+  createValidCardSet,
+  createInvalidCardSet,
+  getHand,
+  applySetup,
+} from './helpers'
+import { Card } from '../types'
 
-const playerA = 'playerA'
-const playerB = 'playerB'
-
-function createCard(rank: Value, suit: Suit): Card {
-  return { rank, suit }
-}
-
-function createValidCardSet(set=1): Card[] {
-  if (set === 2) {
-    return [
-      createCard(2, 'spades'),
-      createCard(5, 'hearts'),
-      createCard(2, 'diamonds'),
-      createCard(1, 'clubs'),
-      createCard(7, 'hearts'),
-      createCard(4, 'spades'),
-      createCard(13, 'clubs'),
-      createCard(6, 'diamonds'),
-    ]
-    }
-    return [
-    createCard(1, 'clubs'),
-    createCard(5, 'hearts'),
-    createCard(7, 'hearts'),
-    createCard(2, 'spades'),
-    createCard(4, 'spades'),
-    createCard(2, 'diamonds'),
-    createCard(6, 'diamonds'),
-    createCard(13, 'clubs'),
-  ]
-}
+const playerA = 'Alice'
+const playerB = 'Bob'
 
 describe('QuestionOrTruthGame setup', () => {
   let game: QuestionOrTruthGame
@@ -67,18 +45,8 @@ describe('QuestionOrTruthGame setup', () => {
   })
 
     it('should return failure if card order is invalid', () => {
-    const invalidCards = [
-        createCard(10, 'clubs'),
-        createCard(5, 'hearts'),
-        createCard(7, 'hearts'),
-        createCard(4, 'spades'),
-        createCard(2, 'spades'), // invalid order: 4 before 2
-        createCard(2, 'diamonds'),
-        createCard(6, 'diamonds'),
-        createCard(1, 'clubs'),
-    ]
 
-    const result = game.setPlayerCards(playerA, invalidCards)
+    const result = game.setPlayerCards(playerA, createInvalidCardSet(3))
 
     expect(result).toEqual({
         success: false,
@@ -103,7 +71,7 @@ describe('QuestionOrTruthGame setup', () => {
     it('should reset hasSubmitted flags after both players submit cards', () => {
     const cards = createValidCardSet()
     game.setPlayerCards(playerA, cards)
-    game.setPlayerCards(playerB, cards) // triggers reset
+    game.setPlayerCards(playerB, cards) // triggers reset & phase change
 
     expect(game['playerStates'][playerA].hasSubmitted).toBe(false)
     expect(game['playerStates'][playerB].hasSubmitted).toBe(false)
@@ -112,7 +80,7 @@ describe('QuestionOrTruthGame setup', () => {
     it('should initialize player states with correct default values', () => {
     const state = game['playerStates'][playerA]
     expect(state.hand).toEqual([])
-    expect(state.chips).toBeDefined() // ou à une valeur fixe ex: 10
+    expect(state.chips).toEqual(STARTING_CHIPS) 
     expect(state.revealedInfo).toEqual([])
     expect(state.hasSubmitted).toBe(false)
     })
@@ -133,6 +101,28 @@ describe('QuestionOrTruthGame setup', () => {
     const result = game.setPlayerCards('intruder', cards as Card[])
 
     expect(result).toEqual({ success: false, reason: "Unknown player." })
+    })
+
+    it('should not change anything to setup again in betting phase', () => {
+    const cards = createValidCardSet()
+    const cards2 = createValidCardSet(2)
+    const cards3 = createValidCardSet(3)
+
+    game.setPlayerCards(playerA, cards)
+    game.setPlayerCards(playerB, cards)
+    expect(game['phase']).toBe('BETTING')
+    expect(game['playerStates'][playerA].hasSubmitted).toBe(false)
+    expect(game['playerStates'][playerB].hasSubmitted).toBe(false)
+    expect(getHand(game, playerA)).toEqual(cards)
+    expect(getHand(game, playerB)).toEqual(cards)
+    
+    applySetup(game, cards2, cards3)
+
+    expect(game['phase']).toBe('BETTING')
+    expect(game['playerStates'][playerA].hasSubmitted).toBe(false)
+    expect(game['playerStates'][playerB].hasSubmitted).toBe(false)
+    expect(getHand(game, playerA)).toEqual(cards)
+    expect(getHand(game, playerB)).toEqual(cards)
     })
 
 })
