@@ -17,19 +17,19 @@ export function createCard(rank: Value, suit: Suit): Card {
 
 export function createValidCardSet(set = 1): Card[] {
   if (set === 2) {
-    return [
+    return [ // BOB
       createCard(2, 'spades'),
       createCard(5, 'hearts'),
-      createCard(2, 'diamonds'),
+      createCard(1, 'diamonds'),
       createCard(1, 'clubs'),
-      createCard(7, 'hearts'),
+      createCard(12, 'hearts'),
       createCard(4, 'spades'),
       createCard(13, 'clubs'),
       createCard(6, 'diamonds'),
     ]
   }
 
-  return [
+  return [ // ALICE
     createCard(1, 'clubs'),
     createCard(5, 'hearts'),
     createCard(7, 'hearts'),
@@ -43,7 +43,7 @@ export function createValidCardSet(set = 1): Card[] {
 
 export function createInvalidCardSet(set = 1): Card[] {
   if (set === 2) {
-    return [
+    return [ 
       createCard(2, 'spades'),
       createCard(5, 'hearts'),
       createCard(2, 'diamonds'),
@@ -66,7 +66,7 @@ export function createInvalidCardSet(set = 1): Card[] {
     ]
     }
 
-  return [
+    return [ 
     createCard(1, 'clubs'),
     createCard(5, 'hearts'),
     createCard(7, 'hearts'),
@@ -144,6 +144,11 @@ export function getHand(game: QuestionOrTruthGame, pid: PlayerId): Card[] {
   return getPrivate(game, 'playerStates')[pid].hand
 }
 
+export function setHand(game: QuestionOrTruthGame, pid: PlayerId, cards: Card[]): Card[] {
+  game['playerStates'][pid].hand = cards
+  return game['playerStates'][pid].hand
+}
+
 export function getPhase(game: QuestionOrTruthGame): string {
   return getPrivate(game, 'phase')
 }
@@ -154,6 +159,14 @@ export function getTurn(game: QuestionOrTruthGame): number {
 
 export function callResolvePlayerAction(game: QuestionOrTruthGame, pid: PlayerId, action: GameAction) {
   return (game as any).resolvePlayerAction(pid, action)
+}
+
+export function getRevealedInfo(game: QuestionOrTruthGame, pid: PlayerId) {
+    return getPrivate(game, 'playerStates')[pid].revealedInfo
+}
+
+export function callAnswerQuestion(game: QuestionOrTruthGame, pid: PlayerId, question: any) {
+  return (game as any).answerQuestion(pid, question)
 }
 
 export function callTurnPhase(game: QuestionOrTruthGame) {

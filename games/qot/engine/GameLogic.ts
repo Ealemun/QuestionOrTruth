@@ -203,7 +203,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
           case "bet":
             return false // Betting is not allowed in resolution phase
           case "question":
-            if (!action.question) return false
+            if (!action.question) {console.log("Question is empty"); return false}
             if (action.question.type === "SUM") {
               if (action.question.variant === "positions") {
                 for (const i of action.question.positions) {
@@ -214,6 +214,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
                 }
               }
             }
+            return true
           case "truth":
             return action.guess?.length === NB_CARDS_TO_GUESS
           }
@@ -296,13 +297,15 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
           };
         case 'consecutive':
           return {
-            question: question,
+            question,
             positions: hand
-              .map((c, i) => ({ i, val: c.rank }))
-              .sort((a, b) => a.val - b.val)
-              .filter((_, idx, arr) => idx > 0 && arr[idx].val === arr[idx - 1].val + 1)
-              .map(({ i }) => i),
-          };
+              .map((card, index) => ({ val: card.rank, index }))
+              .filter((current, i, arr) =>
+                i > 0 && arr[i - 1].val + 1 === current.val
+              )
+              .map((entry) => entry.index),
+          }
+
         case 'max':
           const max = Math.max(...hand.map(c => c.rank));
           return {
