@@ -76,11 +76,13 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
       }
       return { success: true }
     } else if (this.phase === "RESOLUTION" && playerId === this.getBetWinner()) {
-      this.resolvePlayerAction(playerId, action) // TODO check if the question is valid
-      if (!this.isGameOver){
-        this.prepareNextTurn()
-      }
+      const action_result = this.resolvePlayerAction(playerId, action) // TODO check if the question is valid
+      if (action_result.success === true){
+        if (!this.isGameOver()){
+          this.prepareNextTurn()
+        }
       return { success: true }
+      }
     }
     return { success: false, reason: "Action not allowed in current phase." }
   }
@@ -151,7 +153,6 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
    * @param action - The action to resolve, which can be a question or a truth guess.
   */
   private resolvePlayerAction(playerId: PlayerId, action: GameAction): {success: boolean, answer?: boolean | QuestionResponse} {
-    // Résoudre Question ou Vérité
     const state = this.playerStates[playerId]
     if (action.type === "truth") {
       const isCorrect = this.checkTruth(playerId, action.guess!)
@@ -203,7 +204,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
           case "bet":
             return false // Betting is not allowed in resolution phase
           case "question":
-            if (!action.question) {console.log("Question is empty"); return false}
+            if (!action.question) { return false }
             if (action.question.type === "SUM") {
               if (action.question.variant === "positions") {
                 for (const i of action.question.positions) {
