@@ -4,7 +4,7 @@ import {
   applyBet,
   applyQuestion,
   getPrivate,
-  getRevealedInfo,
+  getReceivedInfo,
   callAnswerQuestion,
   getPhase,
   getHand,
@@ -50,7 +50,7 @@ describe('questionAction - all variants', () => {
 
     expect(result.success).toBe(true)
 
-    const revealed = getRevealedInfo(game, Bob)
+    const revealed = getReceivedInfo(game, Bob)
     expect(revealed[revealed.length - 1].question).toEqual(q)
   }
 

@@ -81,7 +81,7 @@ describe('QuestionOrTruthGame setup', () => {
     const state = game['playerStates'][playerA]
     expect(state.hand).toEqual([])
     expect(state.chips).toEqual(STARTING_CHIPS) 
-    expect(state.revealedInfo).toEqual([])
+    expect(state.receivedInfo).toEqual([])
     expect(state.hasSubmitted).toBe(false)
     })
 

@@ -161,8 +161,8 @@ export function callResolvePlayerAction(game: QuestionOrTruthGame, pid: PlayerId
   return (game as any).resolvePlayerAction(pid, action)
 }
 
-export function getRevealedInfo(game: QuestionOrTruthGame, pid: PlayerId) {
-    return getPrivate(game, 'playerStates')[pid].revealedInfo
+export function getReceivedInfo(game: QuestionOrTruthGame, pid: PlayerId) {
+    return getPrivate(game, 'playerStates')[pid].receivedInfo
 }
 
 export function callAnswerQuestion(game: QuestionOrTruthGame, pid: PlayerId, question: any) {

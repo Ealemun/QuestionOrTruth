@@ -44,7 +44,7 @@ describe("resolvePlayerAction", () => {
     expect(result.answer.question.type).toBe("COUNT")
     expect(result.answer.question.variant).toBe("figures")
     expect(result.answer.value).toBe(2)
-    const revealed = getPrivate(game, 'playerStates')['Bob'].revealedInfo
+    const revealed = getPrivate(game, 'playerStates')['Bob'].receivedInfo
     expect(revealed.length).toBe(1)
     expect(revealed[0].question.type).toBe("COUNT")
     expect(revealed[0].question.variant).toBe("figures")

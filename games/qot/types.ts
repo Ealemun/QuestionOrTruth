@@ -16,9 +16,8 @@ export type PlayerId = string
 export type PlayerState = {
   hand: Card[]
   chips: number
-  revealedInfo: QuestionResponse[] // à détailler
+  receivedInfo: QuestionResponse[] // à détailler
   hasSubmitted: boolean
-  lowChips: boolean // si l'adversaire a moins de 5 jetons
 }
 
 export type GamePhase = "SETUP" | "BETTING" | "RESOLUTION" | "END"
@@ -35,7 +34,8 @@ export interface GameObservation {
   turn: number
   hand: Card[]
   chips: number
-  revealedInfo: QuestionResponse[]
+  receivedInfo: QuestionResponse[]
+  givenInfo: QuestionResponse[]
   opponentChipsKnownLow: boolean
   canAct: boolean
 }
