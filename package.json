@@ -44,14 +44,20 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "@tailwindcss/vite": "^4.1.11",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.21",
     "express": "^5.1.0",
     "i18next": "^25.3.2",
     "i18next-browser-languagedetector": "^8.2.0",
+    "postcss": "^8.5.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-i18next": "^15.6.0",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "tailwind": "^4.0.0",
+    "tailwindcss": "^4.1.11"
   }
 }
