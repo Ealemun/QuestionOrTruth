@@ -6,12 +6,12 @@ import { isFigure, isNumerical } from "../utils";
 
 export class QuestionOrTruthGame implements IQuestionOrTruthGame {
   private players: PlayerId[]
-  private playerStates: Record<PlayerId, PlayerState>
-  private currentTurn: number
-  private bets: Record<PlayerId, number>
-  private phase: GamePhase
-  private betWinner: PlayerId | null
-  private winner: PlayerId | null
+  private playerStates!: Record<PlayerId, PlayerState>
+  private currentTurn!: number
+  private bets!: Record<PlayerId, number>
+  private phase!: GamePhase
+  private betWinner!: PlayerId | null
+  private winner!: PlayerId | null
  
   constructor(players: PlayerId[]) {
     this.players = players

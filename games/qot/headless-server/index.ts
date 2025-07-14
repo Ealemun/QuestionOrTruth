@@ -4,7 +4,7 @@ import { GameSession } from './engineWrapper'
 import { StepInput } from './types'
 
 const app = express()
-const port = 3001
+const port = 3002
 
 app.use(bodyParser.json())
 
@@ -28,4 +28,5 @@ app.post('/step', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Headless game server listening on port ${port}`)
+  console.log(`Ctrl + click:    http://localhost:${port}`)
 })

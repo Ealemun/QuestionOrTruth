@@ -1,9 +1,21 @@
 {
+  "name": "qot-monorepo",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared/*",
+    "games/**",
+    "agent"
+  ],
   "devDependencies": {
+    "eslint": "^9.25.0",
+    "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "scripts": {
-  "test": "vitest"
-}
-
+    "test": "vitest",
+    "clean": "rm -rf node_modules */node_modules */dist */build yarn.lock"
+  },
+  "packageManager": "yarn@4.9.2"
 }
