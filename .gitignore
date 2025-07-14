@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.yarn/
+.yarnrc.yml
+PNG-cards-1.1.zip
+PNG-cards-1.2.zip
+PNG-cards-1.3.zip
+PNG-cards.zip
+SVG-cards-1.3.zip
+yarn.lock
