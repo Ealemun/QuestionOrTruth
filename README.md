@@ -1,12 +1,14 @@
 # QuestionOrTruth
 Devil's plan season 2 final game.
 
-cd client
-npm install
+À la racine
 
+- yarn install
 
+Lancer le backend:
 
-Lancer le backend
-dans server faire: npm run dev
-Lancer le frontend
-dans client faire: npm run dev
+- yarn workspace server dev
+
+  Lancer le frontend:
+  
+- yarn workspace client dev
