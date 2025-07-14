@@ -15,21 +15,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
  
   constructor(players: PlayerId[]) {
     this.players = players
-    this.playerStates = {}
-    this.currentTurn = 0
-    this.bets = {}
-    this.phase = "SETUP"
-    this.betWinner = null
-    this.winner = null
-
-    players.forEach(pid => {
-      this.playerStates[pid] = {
-        hand: [],
-        chips: STARTING_CHIPS,
-        receivedInfo: [],
-        hasSubmitted: false,
-      }
-    })
+    this.setup()
   }
 
   public setPlayerCards(playerId: PlayerId, cards: Card[]): { success: true } | { success: false; reason: string } {
@@ -417,6 +403,24 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
    */
   public isGameOver(): boolean {
     return this.phase === "END"
+  }
+
+  public setup(): void{
+    this.playerStates = {}
+    this.currentTurn = 0
+    this.bets = {}
+    this.phase = "SETUP"
+    this.betWinner = null
+    this.winner = null
+
+    this.players.forEach(pid => {
+      this.playerStates[pid] = {
+        hand: [],
+        chips: STARTING_CHIPS,
+        receivedInfo: [],
+        hasSubmitted: false,
+      }
+    })
   }
 
 }
