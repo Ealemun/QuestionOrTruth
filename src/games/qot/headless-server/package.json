@@ -1,0 +1,19 @@
+{
+  "name": "headless-server",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "ts-node index.ts",
+    "dev:headless-server": "yarn workspace headless-server dev"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.6",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.13",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
