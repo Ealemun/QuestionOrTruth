@@ -80,13 +80,13 @@ describe('internal - game integrity & phase logic', () => {
     expect(after).toEqual(before)
   })
 
-  it('maintains isolated revealedInfo per player', () => {
+  it('maintains isolated receivedInfo per player', () => {
     applyBet(game, Alice, 1)
     applyBet(game, Bob, 3)
     applyQuestion(game, Bob, { type: 'COUNT', variant: 'figures' })
 
-    const aliceInfo = getPrivate(game, 'playerStates')[Alice].revealedInfo
-    const bobInfo = getPrivate(game, 'playerStates')[Bob].revealedInfo
+    const aliceInfo = getPrivate(game, 'playerStates')[Alice].receivedInfo
+    const bobInfo = getPrivate(game, 'playerStates')[Bob].receivedInfo
 
     expect(aliceInfo).toHaveLength(0)
     expect(bobInfo).toHaveLength(1)

@@ -26,9 +26,8 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
       this.playerStates[pid] = {
         hand: [],
         chips: STARTING_CHIPS,
-        revealedInfo: [],
+        receivedInfo: [],
         hasSubmitted: false,
-        lowChips: false, // Will be set to true if the player has less than LOW_CHIPS_THRESHOLD chips
       }
     })
   }
@@ -49,7 +48,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
       return { success: false, reason: "Unknown player." }
     }
     this.playerStates[playerId].hand = cards
-    this.playerStates[playerId].hasSubmitted = true // TODO reset hasSubmitted at each phase
+    this.playerStates[playerId].hasSubmitted = true 
 
     if (this.allPlayersReady()) {
       this.turnPhase("BETTING")
@@ -76,7 +75,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
       }
       return { success: true }
     } else if (this.phase === "RESOLUTION" && playerId === this.getBetWinner()) {
-      const action_result = this.resolvePlayerAction(playerId, action) // TODO check if the question is valid
+      const action_result = this.resolvePlayerAction(playerId, action) 
       if (action_result.success === true){
         if (!this.isGameOver()){
           this.prepareNextTurn()
@@ -137,9 +136,6 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     this.playerStates[p1].chips -= b1
     this.playerStates[p2].chips -= b2
 
-    this.playerStates[p1].lowChips = this.playerStates[p1].chips <= LOW_CHIPS_THRESHOLD
-    this.playerStates[p2].lowChips = this.playerStates[p2].chips <= LOW_CHIPS_THRESHOLD
-
     if (b1 !== b2) {
       this.turnPhase("RESOLUTION")
       this.updateBetWinner()
@@ -165,7 +161,7 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     } else if (action.type === "question") {
       const opponentId = this.getOpponent(playerId)
       const response = this.answerQuestion(opponentId, action.question!)
-      state.revealedInfo.push(response)
+      state.receivedInfo.push(response)
       return {success: true, answer: response}
     }
     return {success: false}
@@ -180,9 +176,6 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     const [p1, p2] = this.players
     this.playerStates[p1].chips += 2
     this.playerStates[p2].chips += 2
-
-    this.playerStates[p1].lowChips = this.playerStates[p1].chips <= LOW_CHIPS_THRESHOLD
-    this.playerStates[p2].lowChips = this.playerStates[p2].chips <= LOW_CHIPS_THRESHOLD
 
     this.bets = {}
     this.turnPhase("BETTING")
@@ -394,9 +387,11 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
       turn: this.currentTurn,
       hand: state.hand,
       chips: state.chips,
-      revealedInfo: state.revealedInfo,
-      opponentChipsKnownLow: opponentState.chips <= LOW_CHIPS_THRESHOLD, // TODO check if it's needed only here
-      canAct: this.phase === "RESOLUTION" ? this.getBetWinner() === pid : true
+      receivedInfo: state.receivedInfo,
+      givenInfo: opponentState.receivedInfo,
+      opponentChipsKnownLow: opponentState.chips <= LOW_CHIPS_THRESHOLD,
+      canAct: this.phase === "RESOLUTION" ? this.getBetWinner() === pid :
+      this.isGameOver() ? false : true // can always act except in RESOLUTION phase and END phase
     }
   }
 
