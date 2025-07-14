@@ -1,0 +1,40 @@
+{
+    "welcome": "Welcome to the game!",
+    "title": "Devil's Plan - Question or Truth",
+    "language": "Language",
+    "french": "French",
+    "english": "English",
+    "room": {
+        "create": "Create Room",
+        "join": "Join",
+        "enterCode": "Room Code",
+        "created": "Room created: {{roomId}}",
+        "joined": "Joined room: {{roomId}}",
+        "errorCreating": "Error creating room.",
+        "errorJoining": "Error: {{error}}",
+        "name": "Name",
+        "leave": "Leave the room",
+        "inRoom": "You are in the room: {{roomId}}",
+        "master": "Room master",
+        "makeMaster": "Promote master",
+        "kick": "Kick",
+        "kicked": "You have been kicked from the room.",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "start": "Start Game"
+      },
+    "chat": {
+        "send": "Send",
+        "placeholder": "Type a message...",
+        "systemMessage": "System message",
+        "error": "Error sending message: {{error}}",
+        "roomCreated": "{{playerName}} created the room.",
+        "joined": "{{playerName}} joined the room.",
+        "leave": "{{playerName}} left the room.",
+        "kick": "{{playerName}} was kicked from the room.",
+        "disconnection": "{{playerName}} disconnected.",
+        "promoted": "{{playerName}} was promoted to room master.",
+        "title": "Chat"
+    }
+  }
+  
