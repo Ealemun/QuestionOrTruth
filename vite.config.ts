@@ -1,11 +1,10 @@
 import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
 import * as path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
   root: './src/client',
-  plugins: [],
+  plugins: [ ],
   server: {
     watch: {
       usePolling: true

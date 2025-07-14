@@ -1,4 +1,4 @@
-import './App.css';
+import './index.css';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import MenuScreen from './MenuScreen';
@@ -43,7 +43,7 @@ useEffect(() => {
 
 
   return (
-    <div className="App p-4">
+    <div className="p-4 w-full">
       <LanguageSwitcher />
       <h1>{t('title')}</h1>
       <p>{t('welcome')}</p>
