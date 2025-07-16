@@ -42,18 +42,18 @@ export interface GameObservation {
 
 
 export type Question =
-  | { type: 'SUM'; variant: 'positions'; positions: [number, number, number] }
-  | { type: 'SUM'; variant: 'color'; suit: Suit }
-  | { type: 'SUM'; variant: 'figures' }
-  | { type: 'SUM'; variant: 'numerical' }
-  | { type: 'COUNT'; variant: 'figures' }
-  | { type: 'COUNT'; variant: 'numerical' }
-  | { type: 'COUNT'; variant: 'value'; rank: Value }
-  | { type: 'POSITION'; variant: 'color'; suit: Suit }
-  | { type: 'POSITION'; variant: 'value'; rank: Value }
-  | { type: 'POSITION'; variant: 'consecutive' }
-  | { type: 'POSITION'; variant: 'max' }
-  | { type: 'POSITION'; variant: 'min' }
+  | { type: 'SUM'; variant: 'positions'; positions: [number, number, number] } // 56 poss 8!/(3!5!)
+  | { type: 'SUM'; variant: 'color'; suit: Suit } // 4 poss
+  | { type: 'SUM'; variant: 'figures' } // 1
+  | { type: 'SUM'; variant: 'numerical' } // 1 
+  | { type: 'COUNT'; variant: 'figures' } // 1
+  | { type: 'COUNT'; variant: 'numerical' } // 1
+  | { type: 'COUNT'; variant: 'value'; rank: Value } // 13
+  | { type: 'POSITION'; variant: 'color'; suit: Suit } // 4
+  | { type: 'POSITION'; variant: 'value'; rank: Value } // 13
+  | { type: 'POSITION'; variant: 'consecutive' } // 1 
+  | { type: 'POSITION'; variant: 'max' } // 1
+  | { type: 'POSITION'; variant: 'min' } // 1
 
 export type QuestionResponse =
   | { question: Question; value: number } // SUM and COUNT

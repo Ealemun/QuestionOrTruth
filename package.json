@@ -40,7 +40,11 @@
     "clean": "rm -rf node_modules src/*/node_modules src/*/dist src/*/build yarn.lock",
     "server-dev": "tsx src/server/src/server.ts",
     "client-dev": "vite --config vite.config.ts",
-    "client-build": "vite build --config vite.config.ts"
+    "client-build": "vite build --config vite.config.ts",
+    "headless-server-dev": "tsx src/games/qot/headless-server/index.ts",
+    "train-qot": "python agents/qot/train.py",
+    "postinstall": "pip install -r agents/requirements.txt",
+    "multi": "tsx src/games/qot/headless-server/multi-server.ts"
   },
   "packageManager": "yarn@4.9.2",
   "dependencies": {
