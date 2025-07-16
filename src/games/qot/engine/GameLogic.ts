@@ -405,6 +405,10 @@ export class QuestionOrTruthGame implements IQuestionOrTruthGame {
     return this.phase === "END"
   }
 
+  public isSetupPhase(): boolean{
+    return this.phase === "SETUP"
+  }
+
   public setup(): void{
     this.playerStates = {}
     this.currentTurn = 0

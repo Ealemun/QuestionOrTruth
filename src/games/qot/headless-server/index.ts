@@ -10,6 +10,10 @@ app.use(bodyParser.json())
 
 const session = new GameSession()
 
+app.get('/', (req, res) => {
+  res.send('API headless server OK');
+});
+
 app.post('/reset', (req, res) => {
   const output = session.reset()
   res.json(output)

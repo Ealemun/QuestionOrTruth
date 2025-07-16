@@ -1,8 +1,8 @@
-import { GameObservation, GameAction, PlayerId } from '../types'
+import { GameObservation, GameAction, PlayerId, Card } from '../types'
 
 export type StepInput = {
   player: PlayerId
-  action: GameAction
+  action: GameAction | Card[]
 }
 
 export type StepOutput = {
