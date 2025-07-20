@@ -6,6 +6,7 @@ import { RootState } from "client/app/store";
 import { useDispatch, useSelector } from "react-redux";
 import { resetRoomData } from "../features/roomDataSlice";
 import { useNavigate } from "react-router";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 const RoomScreen = () => {
   const { t } = useTranslation();
@@ -44,6 +45,7 @@ const RoomScreen = () => {
 
   return (
     <div className="p-4 space-y-4 flex flex-col items-center justify-center">
+      <LanguageSwitcher />
       <h2 className="text-xl font-bold">
         {t("room.inRoom", { roomId: room?.id || "" })}
       </h2>
@@ -94,9 +96,7 @@ const RoomScreen = () => {
         ))}
       </ul>
 
-      <ChatBox
-        messages={room?.messages || []}
-      />
+      <ChatBox messages={room?.messages || []} />
 
       <div className="space-y-2">
         {/* Lancer la partie */}
