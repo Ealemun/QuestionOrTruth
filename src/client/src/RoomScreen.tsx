@@ -96,13 +96,6 @@ const RoomScreen = () => {
 
       <ChatBox
         messages={room?.messages || []}
-        onSend={(text) =>
-          socket.emit("chat:message", {
-            roomId: room!.id,
-            senderName: playerName,
-            text,
-          })
-        }
       />
 
       <div className="space-y-2">
