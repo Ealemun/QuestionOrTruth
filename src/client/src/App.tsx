@@ -1,59 +1,48 @@
-import './index.css';
-import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from './components/LanguageSwitcher';
-import MenuScreen from './MenuScreen';
-import RoomScreen from './RoomScreen';
-import { useState, useEffect } from 'react';
-import socket from './socket';
-import type { GameRoom } from '../../shared/types';
+import "./index.css";
+import MenuScreen from "./MenuScreen";
+import RoomScreen from "./RoomScreen";
+import { Route, Routes, useNavigate } from "react-router-dom";
+import { initializeRoomData, resetRoomData } from "../features/roomDataSlice";
+import { t } from "i18next";
+import { useEffect } from "react";
+import { GameRoom } from "shared/types";
+import socket from "./socket";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../app/store";
 
 function App() {
-  const { t } = useTranslation();
-  const [playerName, setPlayerName] = useState('');
-  const [room, setRoom] = useState<any>(null);
 
-  const handleRoomJoin = (roomData: GameRoom | null, name: string) => {
-    setPlayerName(name);
-    setRoom(roomData);
-  };
+  const dispatch = useDispatch();
+  const playerName = useSelector(
+    (state: RootState) => state.roomDataSlice.playerName
+  );
+  const navigate = useNavigate();
 
-  const leaveRoom = () => {
-    setRoom(null);
-  };
+   useEffect(() => {
+      if (!socket.connected) {
+        socket.connect();
+      }
+      socket.on("room:update", (roomData: GameRoom) => {
+        dispatch(initializeRoomData({ roomData, playerName }));
+      });
+      socket.on("room:kicked", () => {
+        alert(t("room.kicked"));
+        dispatch(resetRoomData());
+        navigate('/')
+      });
 
-useEffect(() => {
-  if (!socket.connected) {
-    socket.connect();
-  }
-  // TO DO change
-  socket.on('room:update', (roomData: GameRoom) => {
-    setRoom(roomData);
-});
-  socket.on('room:kicked', () => {
-    alert(t('room.kicked'));
-    setRoom(null);
-  });
-
-  return () => {
+      return () => {
     socket.off('room:update');
     socket.off('room:kicked');
   };
-}, [t]);
-
-
-
+    }, [t]);
+  
+    
   return (
-    <div className="p-4 w-full">
-      <LanguageSwitcher />
-      <h1>{t('title')}</h1>
-      <p>{t('welcome')}</p>
-
-      {!room ? (
-        <MenuScreen onRoomJoined={handleRoomJoin} />
-      ) : (
-        <RoomScreen room={room} playerName={playerName} onLeave={leaveRoom} />
-      )}
-    </div>
+    <Routes>
+      <Route path="/" element={<MenuScreen />} />
+      <Route path="/room/:roomid" element={<RoomScreen />} />
+    </Routes>
   );
 }
 
