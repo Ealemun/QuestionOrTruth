@@ -41,7 +41,8 @@
     "server-dev": "tsx src/server/src/server.ts",
     "client-dev": "vite --config vite.config.ts",
     "client-build": "vite build --config vite.config.ts",
-    "headless-server-dev": "tsx src/games/qot/headless-server/index.ts",
+    "build-qot-headless": "tsc -p tsconfig.qot.build.json",
+    "clean-qot-headless": "rm -rf dist/qot",
     "train-qot": "python agents/qot/train.py",
     "postinstall": "pip install -r agents/requirements.txt",
     "multi": "tsx src/games/qot/headless-server/multi-server.ts"

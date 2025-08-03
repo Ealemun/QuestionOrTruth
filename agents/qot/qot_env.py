@@ -1,8 +1,27 @@
 import numpy as np
 import requests
 from gymnasium import spaces, Env # type: ignore
-# from gym.spaces import Dict, Discrete, MultiDiscrete, Box
+import subprocess
+import json
 from itertools import combinations
+import logging
+
+
+# === Logger setup ===
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # Peut être changé à INFO pour moins de verbosité
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+console_handler.setFormatter(console_formatter)
+logger.addHandler(console_handler)
+
+# File handler (pour garder une trace dans un fichier)
+file_handler = logging.FileHandler("qot_env_debug.log")
+file_formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+file_handler.setFormatter(file_formatter)
+logger.addHandler(file_handler)
 
 NUM_QUESTIONS = 97
 RESPONSE_VEC_SIZE = 105  # 97 + 1 + 7
@@ -11,10 +30,24 @@ HISTORY_LIMIT = 10
 # Precompute all valid position combinations for SUM-positions encoding
 ALL_POSITION_COMBOS = list(combinations(range(8), 3))
 
+PHASE_MAP = {
+    "SETUP": 0,
+    "BETTING": 1,
+    "RESOLUTION": 2,
+    "END": 3
+}
+
 class QOTEnv(Env):
-    def __init__(self, base_url="http://localhost:3002"):
+    def __init__(self):
         super().__init__()
-        self.base_url = base_url
+        self.process = subprocess.Popen(
+            ["node", "dist/qot/headless-server/index.js"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=open("qot_server_err.log", "w"),
+            text=True,
+            bufsize=1
+        )
 
         self.observation_space = spaces.Dict({
             "phase": spaces.Discrete(4),  # 0: SETUP, 1: BETTING, 2: RESOLUTION, 3: END
@@ -34,7 +67,7 @@ class QOTEnv(Env):
         super().reset(seed=seed)
         self._phase = "SETUP"
 
-        obs = self._post("/reset", {})
+        obs = self._send("reset")
         self._last_obs = obs
 
         processed = self._process_obs(obs)
@@ -42,6 +75,7 @@ class QOTEnv(Env):
 
     def step(self, action):
         # print("\n\n\n\n Voici l'action choisie", action, "\n\n\n")
+        # logger.debug(f"Action envoyée dans phase {self._phase}: {action}")
         if self._phase == "SETUP":
             values = action[:8]
             suits = action[8:]
@@ -59,8 +93,15 @@ class QOTEnv(Env):
 
         try:
             # print("\n\n\n\n Voici le résultat envoyé", payload, "\n\n\n")
-            result = self._post("/step", payload)
+            result = self._send("step", payload)
+            
+            if "error" in result:
+                e = result["error"]
+                # logger.error(f"[ERROR] Server error or invalid input: {e}", exc_info=True)
+                dummy_obs = self._process_obs(self._last_obs)
+                return dummy_obs, -1000.0, True, False, {"error": str(e)}
             obs = self._process_obs(result)
+            print("The observation is: ", obs)
             reward = float(result.get("reward", 0))
             done = bool(result.get("done", False))
             info = result.get("info", {})
@@ -72,6 +113,7 @@ class QOTEnv(Env):
 
         except Exception as e:
             # print(f"[ERROR] Server error or invalid input: {e}")
+            # logger.error(f"[ERROR] Server error or invalid input: {e}", exc_info=True)
             dummy_obs = self._process_obs(self._last_obs)
             return dummy_obs, -1000.0, True, False, {"error": str(e)}
         
@@ -101,11 +143,40 @@ class QOTEnv(Env):
         if response.status_code != 200:
             raise ValueError(response.json().get("error", "Unknown server error"))
         return response.json()
+    
+    def _send(self, command, payload=None):
+        msg = {"command": command}
+        if payload is not None:
+            msg["payload"] = payload
+        self.process.stdin.write(json.dumps(msg) + "\n")
+        self.process.stdin.flush()
+        response = self.process.stdout.readline()
+        logger.debug(f"Commande envoyée au serveur: {msg}")
+        logger.debug(f"Réponse Node.js : {response.strip()}")
+        if not response.strip():
+            # logger.error("[ERROR] [env] Réponse vide reçue du subprocess !")
+            return {"error": "empty response from engine"}
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError as e:
+            # logger.error(f"[ERROR] [env] JSON invalide reçu : {response!r}")
+            raise
+
+    
+    def close(self):
+        if self.process:
+            self.process.terminate()
+            self.process.wait()
+
+    def __del__(self):
+        self.close()
 
     def _process_obs(self, raw_obs):
-        phase = raw_obs.get("phase", 0)
-        chips = np.array([float(raw_obs.get("chips", 0))], dtype=np.float32)
-        info_history = raw_obs.get("receivedInfo", [])[-HISTORY_LIMIT:]
+        obs = raw_obs.get("obs", {})
+        string_phase = obs.get("phase", 0)
+        phase = PHASE_MAP.get(string_phase, -1)
+        chips = np.array([float(obs.get("chips", 0))], dtype=np.float32)
+        info_history = obs.get("receivedInfo", [])[-HISTORY_LIMIT:]
 
         encoded_history = np.zeros((HISTORY_LIMIT, RESPONSE_VEC_SIZE), dtype=np.float32)
         for i, info in enumerate(info_history):

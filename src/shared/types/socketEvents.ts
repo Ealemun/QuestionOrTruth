@@ -1,8 +1,10 @@
+import { QuestionOrTruthGame } from 'games/qot/engine/GameLogic';
 import type { GameRoom, RoomResponse } from './';
 
 export interface ServerToClientEvents {
   'room:update': (room: GameRoom) => void;
   'room:kicked': () => void;
+  'game:start': (room: GameRoom, newGame: QuestionOrTruthGame) => void;
   'error': (error: { message: string }) => void;
 //   'chat:message': (message: ChatMessage) => void;
   // autres événements émis du serveur vers le client
