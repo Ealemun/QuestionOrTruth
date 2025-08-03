@@ -5,6 +5,8 @@ import type { GameRoom } from "../../shared/types";
 import ChatBox from "./ChatBox";
 import { RootState } from "client/app/store";
 import { useSelector } from "react-redux";
+import { Setup } from "./components/qot/setup/Setup";
+import { QuestionOrTruthGame } from "games/qot/engine/GameLogic";
 
 const faceMap = {
   A: 1,
@@ -40,6 +42,10 @@ const QOT = () => {
   const playerName = useSelector(
     (state: RootState) => state.roomDataSlice.playerName
   );
+  const qotGameRawData = useSelector((state: RootState) => state.qotSlicer.qotGame);
+  //const qotGame = qotGameRawData ? QuestionOrTruthGame.fromObject(qotGameRawData.) : null
+  
+
   const [cards, setCards] = useState(Array(8).fill(null));
 
   const leaveRoom = () => {
@@ -59,23 +65,8 @@ const QOT = () => {
   }
 
   return (
-    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-      {cards.map((card, i) => (
-        <select
-          key={i}
-          value={card?.label || ""}
-          onChange={(e) => handleChange(i, e.target.value)}
-        >
-          <option value="">--</option>
-          {allOptions.map((opt) => (
-            <option key={opt.label} value={opt.label}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      ))}
-
-      <pre>{JSON.stringify(cards, null, 2)}</pre>
+    <div>
+      {/*(qotGame && qotGame?.isSetupPhase()) && <Setup /> */}
     </div>
   );
 };

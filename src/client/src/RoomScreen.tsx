@@ -20,7 +20,6 @@ const RoomScreen = () => {
 
   /* redirect to game page when starting */
   useEffect(() => {
-    console.log('useEffect', room?.status)
     if (room?.status == "in_progress") {
       navigate("/qot/" + room.id);
     }
@@ -51,7 +50,7 @@ const RoomScreen = () => {
   const launchGame = () => {
     console.log("FRONT LAUNCH");
     socket.emit("room:start_game", room?.id || ""); // À brancher plus tard
-    
+
   };
 
   return (

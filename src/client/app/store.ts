@@ -1,9 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import roomDataReducer from '../features/roomDataSlice'
+import setupCardsQotReducer from '../features/qot/setupCardsQot'
+import qotSliceReducer from '../features/qot/qotSlice'
 
 export const store = configureStore({
   reducer: {
-    roomDataSlice: roomDataReducer
+    roomDataSlice: roomDataReducer,
+    setupCardsQot: setupCardsQotReducer,
+    qotSlicer: qotSliceReducer
   }
 })
 
