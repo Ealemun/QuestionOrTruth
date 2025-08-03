@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import socket from "./socket";
 import { useTranslation } from "react-i18next";
 import ChatBox from "./ChatBox";
@@ -17,6 +17,15 @@ const RoomScreen = () => {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
+
+  /* redirect to game page when starting */
+  useEffect(() => {
+    console.log('useEffect', room?.status)
+    if (room?.status == "in_progress") {
+      navigate("/qot/" + room.id);
+    }
+  }, [room]);
+
   const leaveRoom = () => {
     socket.emit("player:leave_room", room?.id || "", playerName);
     dispatch(resetRoomData());
@@ -40,7 +49,9 @@ const RoomScreen = () => {
   };
 
   const launchGame = () => {
+    console.log("FRONT LAUNCH");
     socket.emit("room:start_game", room?.id || ""); // À brancher plus tard
+    
   };
 
   return (
@@ -106,7 +117,7 @@ const RoomScreen = () => {
             className={`p-2 rounded text-white w-full ${
               room?.status === "ready"
                 ? "bg-green-600 hover:bg-green-700"
-                : "bg-gray-400 cursor-not-allowed"
+                : "bg-gray-400"
             }`}
             disabled={room?.status !== "ready"}
           >

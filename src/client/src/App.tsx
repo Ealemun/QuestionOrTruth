@@ -9,6 +9,8 @@ import { GameRoom } from "shared/types";
 import socket from "./socket";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../app/store";
+import QOTScreen from "./QOTScreen";
+import { QuestionOrTruthGame } from "games/qot/engine/GameLogic";
 
 function App() {
 
@@ -31,6 +33,10 @@ function App() {
         navigate('/')
       });
 
+      socket.on("game:start", (roomData: GameRoom, qotGame: QuestionOrTruthGame) => {
+        dispatch(initializeRoomData({roomData, playerName}))
+      })
+
       return () => {
     socket.off('room:update');
     socket.off('room:kicked');
@@ -42,6 +48,7 @@ function App() {
     <Routes>
       <Route path="/" element={<MenuScreen />} />
       <Route path="/room/:roomid" element={<RoomScreen />} />
+      <Route path="/qot/:roomid" element={<QOTScreen />} />
     </Routes>
   );
 }
