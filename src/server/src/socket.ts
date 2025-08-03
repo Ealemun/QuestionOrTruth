@@ -55,7 +55,7 @@ export const initSocket = (httpServer: HttpServer) => {
     socket.on(
       "player:join_room",
       (roomId: string, playerName: string, callback) => {
-        const room = joinRoom(roomId, socket.id, playerName);
+        const room =  joinRoom(roomId, socket.id, playerName);
         if (!room) {
           callback({ success: false, error: "Room full or not found" });
           return null;
@@ -155,9 +155,11 @@ export const initSocket = (httpServer: HttpServer) => {
     });
 
     socket.on("room:start_game", (roomId: string) => {
+      console.log('ON ENTRE DANS START')
       const [updatedRoom, newGame] = startGame(roomId);
       if (updatedRoom) {
         io.to(roomId).emit("game:start", updatedRoom, newGame);
+        console.log("status updated in room ", updatedRoom.id, " : ", updatedRoom.status)
       }
     });
   });
