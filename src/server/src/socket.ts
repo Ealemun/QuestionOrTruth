@@ -155,7 +155,6 @@ export const initSocket = (httpServer: HttpServer) => {
     });
 
     socket.on("room:start_game", (roomId: string) => {
-      console.log('ON ENTRE DANS START')
       const [updatedRoom, newGame] = startGame(roomId);
       if (updatedRoom) {
         io.to(roomId).emit("game:start", updatedRoom, newGame);
