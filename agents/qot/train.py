@@ -4,18 +4,21 @@ from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import CheckpointCallback
 from qot_env import QOTEnv
+from stable_baselines3.common.monitor import Monitor
 
-def make_env(port):
+def make_env():
     def _init():
-        env = QOTEnv(base_url=f"http://localhost:{port}")
-        check_env(env, warn=True)  # Optionnel, à garder pour debug
+        env = QOTEnv()
+        env = Monitor(env)  # Monitor pour stable_baselines3
+        # Optionnel : env = RecordEpisodeStatistics(env)  # si tu veux logger stats Gymnasium
+        check_env(env, warn=True)
         return env
     return _init
 
 def main():
     NUM_ENVS = 6
-    START_PORT = 3003
-
+    # START_PORT = 3003
+    print("Start of the main\n\n\n\n")
     # --- Setup des dossiers ---
     model_dir = "agents/qot/saved_models"
     log_dir = "agents/qot/logs/ppo_tensorboard"
@@ -34,8 +37,12 @@ def main():
     )
 
     # --- Parallélisation des environnements ---
-    env = SubprocVecEnv([make_env(START_PORT + i) for i in range(NUM_ENVS)])
+    # env = SubprocVecEnv([make_env(START_PORT + i) for i in range(NUM_ENVS)])
+    # env = VecMonitor(env)
+    print("Before env creation\n\n\n\n")
+    env = SubprocVecEnv([make_env() for _ in range(NUM_ENVS)])
     env = VecMonitor(env)
+    # print("Env created\n\n\n\n")
 
     # --- Chargement modèle existant ou nouveau ---
     latest_checkpoint = None
@@ -57,15 +64,16 @@ def main():
             env,
             verbose=1,
             tensorboard_log=log_dir,
-            n_steps=32,  # Apprentissage rapide des erreurs
-            batch_size=16
+            n_steps=32,#2048,  # Apprentissage rapide des erreurs
+            batch_size=16#64
         )
 
     # --- Entraînement ---
     model.learn(
-        total_timesteps=100_000,
+        total_timesteps=1_00,
         callback=checkpoint_callback,
-        tb_log_name="PPO_QOT"
+        tb_log_name="PPO_QOT",
+        progress_bar=True
     )
 
     # --- Sauvegarde finale ---
@@ -73,4 +81,6 @@ def main():
     print("✅ Modèle final sauvegardé.")
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.set_start_method("spawn", force=True)
     main()

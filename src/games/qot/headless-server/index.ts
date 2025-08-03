@@ -1,36 +1,62 @@
-import express from 'express'
-import bodyParser from 'body-parser'
-import { GameSession } from './engineWrapper'
-import { StepInput } from './types'
+import { GameSession } from "./engineWrapper";
+import { StepInput } from "./types";
 
-const app = express()
-const port = 3002
+const readline = require("readline");
 
-app.use(bodyParser.json())
-
-const session = new GameSession()
-
-app.get('/', (req, res) => {
-  res.send('API headless server OK');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: false,
 });
 
-app.post('/reset', (req, res) => {
-  const output = session.reset()
-  res.json(output)
-})
+const session = new GameSession();
 
-app.post('/step', (req, res) => {
-  const input = req.body as StepInput
+process.on("uncaughtException", (err) => {
+  // console.error("[UNCAUGHT EXCEPTION]", err);
+});
 
+rl.on("line", async function (line: string) {
   try {
-    const output = session.step(input)
-    res.json(output)
-  } catch (err: any) {
-    res.status(400).json({ error: err.message })
-  }
-})
+    // console.error("[RECEIVED]", line);
 
-app.listen(port, () => {
-  console.log(`Headless game server listening on port ${port}`)
-  console.log(`Ctrl + click:    http://localhost:${port}`)
-})
+    const data = JSON.parse(line);
+
+    let result;
+
+    if (data.command === "reset") {
+      result = await maybeAsync(session.reset());
+    } else if (data.command === "step") {
+      result = await maybeAsync(session.step(data.payload as StepInput));
+    } else {
+      throw new Error(`Unknown command: ${data.command}`);
+    }
+
+    if (result === undefined) {
+      // console.error(
+      //   `[ERROR] Command '${data.command}' returned undefined (bad logic?)`
+      // );
+      result = {
+        error: "Command returned undefined",
+      };
+    }
+
+    const output = JSON.stringify(result);
+    // console.error("[RESPONSE] [index]", output);
+    if (!output) {
+      // console.error("[FATAL] Tried to write empty output");
+    }
+
+    console.log(output);
+  } catch (err: any) {
+    // console.error("[ERROR] [index]", err);
+    console.log(JSON.stringify({ error: err.message }));
+  }
+});
+
+// Helper to handle both sync and async returns
+async function maybeAsync<T>(value: T | Promise<T>): Promise<T> {
+  if (value instanceof Promise) {
+    return await value;
+  }
+  return value;
+}

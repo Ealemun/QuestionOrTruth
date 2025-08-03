@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist/qot",
+    "rootDir": "src/games/qot",
+    "module": "commonjs",
+    "target": "ES2020"
+  },
+  "include": ["src/games/qot"]
+}

@@ -8,6 +8,7 @@ import {
   toggleReady,
   addMessage,
   isMaster,
+  startGame,
 } from "./services/roomManager";
 import {
   ChatMessage,
@@ -150,6 +151,13 @@ export const initSocket = (httpServer: HttpServer) => {
       if (updatedRoom) {
         io.to(roomId).emit("room:update", updatedRoom);
         console.log(JSON.stringify(updatedRoom.messages, null, 2));
+      }
+    });
+
+    socket.on("room:start_game", (roomId: string) => {
+      const [updatedRoom, newGame] = startGame(roomId);
+      if (updatedRoom) {
+        io.to(roomId).emit("game:start", updatedRoom, newGame);
       }
     });
   });
