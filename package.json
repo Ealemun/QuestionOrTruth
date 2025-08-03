@@ -40,7 +40,7 @@
     "clean": "rm -rf node_modules src/*/node_modules src/*/dist src/*/build yarn.lock",
     "server-dev": "tsx src/server/src/server.ts",
     "client-dev": "vite --config vite.config.ts",
-    "client-build": "vite build --config vite.config.ts",
+    "client-build": "tsc && vite build --config vite.config.ts",
     "build-qot-headless": "tsc -p tsconfig.qot.build.json",
     "clean-qot-headless": "rm -rf dist/qot",
     "train-qot": "python agents/qot/train.py",
