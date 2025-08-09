@@ -2,519 +2,210 @@ import type {
   PlayerId,
   Card,
   GameAction,
-  GamePhase,
   GameObservation,
-  Value,
-  Suit,
-  Question,
-  QuestionResponse,
-  PlayerState,
+  QuestionOrTruthGame,
 } from "../types";
 import {
   LOW_CHIPS_THRESHOLD,
-  NB_CARDS_TO_GUESS,
   STARTING_CHIPS,
 } from "../config";
-import { IQuestionOrTruthGame } from "../engine/IGameLogic";
-import { isFigure, isNumerical } from "../utils";
+import { allPlayersReady, checkGameActionValidity, getOpponent, prepareNextTurn, resolveBettingPhase, resolvePlayerAction, turnPhase, validateCardOrder } from "./internals";
 
-export class QuestionOrTruthGame implements IQuestionOrTruthGame {
-  private players: PlayerId[];
-  private playerStates!: Record<PlayerId, PlayerState>;
-  private currentTurn!: number;
-  private bets!: Record<PlayerId, number>;
-  private phase!: GamePhase;
-  private betWinner!: PlayerId | null;
-  private winner!: PlayerId | null;
+/**
+ * @brief Resets an existing game object to its initial state.
+ *
+ * This function clears all dynamic game data such as hands, chips, bets,
+ * turn count, phase, winner, and player submissions — while preserving
+ * the current list of players.
+ *
+ * Use this to restart a game session without creating a new object.
+ *
+ * @param game - The existing `QuestionOrTruthGame` instance to reset.
+ */
+export function setup(game: QuestionOrTruthGame): void {
+  game.playerStates = {};
+  game.currentTurn = 0;
+  game.bets = {};
+  game.phase = "SETUP";
+  game.betWinner = null;
+  game.winner = null;
 
-  constructor(players: PlayerId[]) {
-    this.players = players;
-    this.setup();
+  game.players.forEach((pid) => {
+    game.playerStates[pid] = {
+      hand: [],
+      chips: STARTING_CHIPS,
+      receivedInfo: [],
+      hasSubmitted: false,
+    };
+  });
+}
+
+/**
+ * @brief Creates a new game state object with the given players.
+ *
+ * This function returns a freshly initialized `QuestionOrTruthGame` object.
+ * It sets the players and calls `setup` to initialize all internal state
+ * such as player hands, chips, turn count, phase, and other game data.
+ *
+ * Use this at the start of a new game session.
+ *
+ * @param players - The list of player IDs participating in the game.
+ * @returns A fully initialized `QuestionOrTruthGame` object.
+ */
+export function createInitialGameState(
+  players: PlayerId[]
+): QuestionOrTruthGame {
+  const game = {} as QuestionOrTruthGame;
+  game.players = players;
+  setup(game);
+  return game;
+}
+
+/**
+ * @brief Sets the cards for a player in the game.
+ * @param game - The current game
+ * @param playerId - The ID of the player whose cards are being set.
+ * @param cards - The array of cards to be assigned to the player.
+ * @returns An object indicating success or failure, with a reason if applicable.
+ */
+export function setPlayerCards(
+  game: QuestionOrTruthGame,
+  playerId: PlayerId,
+  cards: Card[]
+): { success: true } | { success: false; reason: string } {
+  if (game.phase !== "SETUP") {
+    return { success: false, reason: "Game already started." };
   }
 
-  /* valued constructor */
-  static fromObject(obj: {
-    players: PlayerId[];
-    playerStates: Record<PlayerId, PlayerState>;
-    currentTurn: number;
-    bets: Record<PlayerId, number>;
-    phase: GamePhase;
-    betWinner: PlayerId | null;
-    winner: PlayerId | null;
-  }): QuestionOrTruthGame {
-    const instance = new QuestionOrTruthGame(obj.players);
-    instance.playerStates = obj.playerStates;
-    instance.currentTurn = obj.currentTurn;
-    instance.bets = obj.bets;
-    instance.phase = obj.phase;
-    instance.betWinner = obj.betWinner;
-    instance.winner = obj.winner;
-    return instance;
-  }
-
-
-  public setPlayerCards(
-    playerId: PlayerId,
-    cards: Card[]
-  ): { success: true } | { success: false; reason: string } {
-    if (this.phase !== "SETUP") {
-      return { success: false, reason: "Game already started." };
-    }
-
-    const [isValid, invalidSuit] = this.validateCardOrder(cards); // TODO check with the front if reason is needed
-    if (!isValid) {
-      if (invalidSuit === null) {
-        return {
-          success: false,
-          reason: "Invalid card amout or presence of duplicates.",
-        };
-      }
+  const [isValid, invalidSuit] = validateCardOrder(cards); // TODO check with the front if reason is needed
+  if (!isValid) {
+    if (invalidSuit === null) {
       return {
         success: false,
-        reason: `Invalid card order for suit: ${invalidSuit}`,
+        reason: "Invalid card amout or presence of duplicates.",
       };
     }
-    if (!this.playerStates.hasOwnProperty(playerId)) {
-      return { success: false, reason: "Unknown player." };
-    }
-    this.playerStates[playerId].hand = cards;
-    this.playerStates[playerId].hasSubmitted = true;
+    return {
+      success: false,
+      reason: `Invalid card order for suit: ${invalidSuit}`,
+    };
+  }
+  if (!game.playerStates.hasOwnProperty(playerId)) {
+    return { success: false, reason: "Unknown player." };
+  }
+  game.playerStates[playerId].hand = cards;
+  game.playerStates[playerId].hasSubmitted = true;
 
-    if (this.allPlayersReady()) {
-      this.turnPhase("BETTING");
-      this.currentTurn = 1;
-    }
+  if (allPlayersReady(game)) {
+    turnPhase(game, "BETTING");
+    game.currentTurn = 1;
+  }
 
+  return { success: true };
+}
+
+/**
+ * @brief Applies an action taken by a player during the game.
+ * @param game - The current game
+ * @param playerId - The ID of the player taking the action.
+ * @param action - The action being applied, which can include betting or resolving a question/answer.
+ * @returns An object indicating success or failure of the action, with a reason if applicable.
+ */
+export function applyAction(
+  game: QuestionOrTruthGame,
+  playerId: PlayerId,
+  action: GameAction
+): { success: true } | { success: false; reason: string } {
+  // TODO check that the GameAction is valid
+  if (!checkGameActionValidity(game, action)) {
+    return {
+      success: false,
+      reason: "Invalid action for the current phase.",
+    };
+  }
+  if (game.phase === "BETTING") {
+    game.bets[playerId] = action.bet ?? 0;
+    if (
+      action.bet === undefined ||
+      action.bet < 0 ||
+      action.bet > game.playerStates[playerId].chips
+    ) {
+      return { success: false, reason: "Invalid bet amount." };
+    }
+    game.playerStates[playerId].hasSubmitted = true;
+
+    if (allPlayersReady(game)) {
+      resolveBettingPhase(game);
+    }
     return { success: true };
-  }
-
-  public applyAction(
-    playerId: PlayerId,
-    action: GameAction
-  ): { success: true } | { success: false; reason: string } {
-    // TODO check that the GameAction is valid
-    if (!this.checkGameActionValidity(action)) {
-      return {
-        success: false,
-        reason: "Invalid action for the current phase.",
-      };
-    }
-    if (this.phase === "BETTING") {
-      this.bets[playerId] = action.bet ?? 0;
-      if (
-        action.bet === undefined ||
-        action.bet < 0 ||
-        action.bet > this.playerStates[playerId].chips
-      ) {
-        return { success: false, reason: "Invalid bet amount." };
-      }
-      this.playerStates[playerId].hasSubmitted = true;
-
-      if (this.allPlayersReady()) {
-        this.resolveBettingPhase();
+  } else if (game.phase === "RESOLUTION" && playerId === getBetWinner(game)) {
+    const action_result = resolvePlayerAction(game, playerId, action);
+    if (action_result.success === true) {
+      if (!isGameOver(game)) {
+        prepareNextTurn(game);
       }
       return { success: true };
-    } else if (
-      this.phase === "RESOLUTION" &&
-      playerId === this.getBetWinner()
-    ) {
-      const action_result = this.resolvePlayerAction(playerId, action);
-      if (action_result.success === true) {
-        if (!this.isGameOver()) {
-          this.prepareNextTurn();
-        }
-        return { success: true };
-      }
-    }
-    return { success: false, reason: "Action not allowed in current phase." };
-  }
-
-  /**
-   * @brief Validates the order of cards for a player.
-   * This function checks if the provided card order is valid according to the game's rules.
-   * Cards must be arranged such that cards of the same suit are in ascending order from left to right, but suits do not need to be consecutive.
-   * @param cards - The array of cards to validate.
-   * @return A tuple where the first element is a boolean indicating if the order is valid, and the second element is the suit of the first card that breaks the order, or null if the order is valid.
-   */
-  private validateCardOrder(
-    cards: Card[]
-  ): [boolean: boolean, value: Suit | null] {
-    if (cards.length !== NB_CARDS_TO_GUESS) return [false, null];
-    const suits: Record<Suit, Card[]> = {
-      spades: [],
-      hearts: [],
-      diamonds: [],
-      clubs: [],
-    };
-    for (const card of cards) {
-      suits[card.suit].push(card);
-    }
-
-    for (const suit in suits) {
-      const cardsOfSuit = suits[suit as Suit];
-
-      for (let i = 1; i < cardsOfSuit.length; i++) {
-        if (cardsOfSuit[i - 1].rank > cardsOfSuit[i].rank) {
-          return [false, suit as Suit];
-        }
-        if (cardsOfSuit[i - 1].rank === cardsOfSuit[i].rank) {
-          return [false, null]; // Two cards of the same rank in the same suit
-        }
-      }
-    }
-
-    return [true, null];
-  }
-
-  /**
-   * @brief Gets the current observation for a player.
-   * @param None
-   * @returns An object containing the current game state relevant to the player.
-   */
-  private resolveBettingPhase(): void {
-    const [p1, p2] = this.players;
-    const b1 = this.bets[p1];
-    const b2 = this.bets[p2];
-
-    this.playerStates[p1].chips -= b1;
-    this.playerStates[p2].chips -= b2;
-
-    if (b1 !== b2) {
-      this.turnPhase("RESOLUTION");
-      this.updateBetWinner();
-    } else this.prepareNextTurn();
-  }
-
-  /**
-   * @brief Resolves the action taken by a player, such as answering a question or making a guess.
-   * @param playerId - The ID of the player whose action is being resolved.
-   * @param action - The action to resolve, which can be a question or a truth guess.
-   */
-  private resolvePlayerAction(
-    playerId: PlayerId,
-    action: GameAction
-  ): { success: boolean; answer?: boolean | QuestionResponse } {
-    const state = this.playerStates[playerId];
-    if (action.type === "truth") {
-      const isCorrect = this.checkTruth(playerId, action.guess!);
-      if (isCorrect) {
-        this.winner = playerId;
-        this.turnPhase("END");
-        return { success: true, answer: true };
-      }
-      return { success: true, answer: false };
-    } else if (action.type === "question") {
-      const opponentId = this.getOpponent(playerId);
-      const response = this.answerQuestion(opponentId, action.question!);
-      state.receivedInfo.push(response);
-      return { success: true, answer: response };
-    }
-    return { success: false };
-  }
-
-  /**
-   * @brief Prepares the game for the next turn after resolving the current actions.
-   * Increments the turn count and resets player submissions.
-   */
-  private prepareNextTurn(): void {
-    const [p1, p2] = this.players;
-    this.playerStates[p1].chips += 2;
-    this.playerStates[p2].chips += 2;
-
-    this.bets = {};
-    this.turnPhase("BETTING");
-    this.currentTurn += 1;
-    this.betWinner = null; // Reset the bet winner for the next turn
-  }
-
-  /**
-   * @brief Checks if the action is valid for the current game phase.
-   * @param action - The action to validate.
-   * @return True if the action is valid, false otherwise.
-   */
-  private checkGameActionValidity(action: GameAction): boolean {
-    if (this.phase === "BETTING") {
-      return action.type === "bet" && typeof action.bet === "number";
-    } else if (this.phase === "RESOLUTION") {
-      switch (action.type) {
-        case "bet":
-          return false; // Betting is not allowed in resolution phase
-        case "question":
-          if (!action.question) {
-            return false;
-          }
-          if (action.question.type === "SUM") {
-            if (action.question.variant === "positions") {
-              for (const i of action.question.positions) {
-                if (i < 0 || i >= NB_CARDS_TO_GUESS) {
-                  // throw new Error(`Invalid card index: ${i}`);
-                  return false;
-                }
-              }
-            }
-          }
-          return true;
-        case "truth":
-          return action.guess?.length === NB_CARDS_TO_GUESS;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * @brief Checks if a guess made by a player is correct.
-   * @param guesserId - The ID of the player making the guess.
-   * @param guess - The array of cards guessed by the player.
-   * @returns True if the guess is correct, false otherwise.
-   */
-  private checkTruth(guesserId: PlayerId, guess: Value[]): boolean {
-    const opponentId = this.getOpponent(guesserId);
-    const target = this.playerStates[opponentId].hand;
-    return target.every((card, i) => card.rank === guess[i]);
-  }
-
-  /**
-   * @brief Answers a question posed by an opponent.
-   * @param opponentId - The ID of the opponent asking the question.
-   * @param question - The question being answered.
-   * @returns The answer to the question, which can vary based on the type of question.
-   */
-  private answerQuestion(
-    opponentId: PlayerId,
-    question: Question
-  ): QuestionResponse {
-    const hand = this.playerStates[opponentId].hand;
-
-    switch (question.type) {
-      case "SUM":
-        switch (question.variant) {
-          case "positions":
-            // for (const i of question.positions) {
-            //   if (i < 0 || i >= NB_CARDS_TO_GUESS) {
-            //     throw new Error(`Invalid card index: ${i}`);
-            //   }
-            // }
-            const values = question.positions.map((i) => hand[i]?.rank ?? 0);
-            return {
-              question: question,
-              value: values.reduce((a, b) => a + b, 0),
-            };
-          case "color":
-            return {
-              question: question,
-              value: hand
-                .filter((c) => c.suit === question.suit)
-                .reduce((sum, c) => sum + c.rank, 0),
-            };
-          case "figures":
-            return {
-              question: question,
-              value: hand
-                .filter((c) => isFigure(c.rank))
-                .reduce((sum, c) => sum + c.rank, 0),
-            };
-          case "numerical":
-            return {
-              question: question,
-              value: hand
-                .filter((c) => isNumerical(c.rank))
-                .reduce((sum, c) => sum + c.rank, 0),
-            };
-        }
-
-      case "COUNT":
-        switch (question.variant) {
-          case "figures":
-            return {
-              question: question,
-              value: hand.filter((c) => isFigure(c.rank)).length,
-            };
-          case "numerical":
-            return {
-              question: question,
-              value: hand.filter((c) => isNumerical(c.rank)).length,
-            };
-          case "value":
-            return {
-              question: question,
-              value: hand.filter((c) => c.rank === question.rank).length,
-            };
-        }
-
-      case "POSITION":
-        switch (question.variant) {
-          case "color":
-            return {
-              question: question,
-              positions: hand
-                .map((c, i) => (c.suit === question.suit ? i : -1))
-                .filter((i) => i >= 0),
-            };
-          case "value":
-            return {
-              question: question,
-              positions: hand
-                .map((c, i) => (c.rank === question.rank ? i : -1))
-                .filter((i) => i >= 0),
-            };
-          case "consecutive":
-            return {
-              question,
-              positions: hand
-                .map((card, index) => ({ val: card.rank, index }))
-                .filter(
-                  (current, i, arr) =>
-                    i > 0 && arr[i - 1].val + 1 === current.val
-                )
-                .map((entry) => entry.index),
-            };
-
-          case "max":
-            const max = Math.max(...hand.map((c) => c.rank));
-            return {
-              question: question,
-              positions: hand
-                .map((c, i) => (c.rank === max ? i : -1))
-                .filter((i) => i >= 0),
-            };
-          case "min":
-            const min = Math.min(...hand.map((c) => c.rank));
-            return {
-              question: question,
-              positions: hand
-                .map((c, i) => (c.rank === min ? i : -1))
-                .filter((i) => i >= 0),
-            };
-        }
-    }
-
-    throw new Error("Unsupported question");
-  }
-
-  /**
-   * @brief Resets the submission status of all players.
-   * This is typically called at the start of a new turn.
-   */
-  private resetSubmitted() {
-    this.players.forEach((pid) => {
-      this.playerStates[pid].hasSubmitted = false;
-    });
-  }
-
-  /**
-   * @brief Checks if all players have submitted their actions for the current phase.
-   * @returns True if all players are ready, false otherwise.
-   */
-  private allPlayersReady(): boolean {
-    return this.players.every((pid) => this.playerStates[pid].hasSubmitted);
-  }
-
-  /**
-   * @brief Gets the opponent of a given player.
-   * @param pid - The ID of the player whose opponent is being requested.
-   * @returns The ID of the opponent player.
-   */
-  private getOpponent(pid: PlayerId): PlayerId {
-    return this.players.find((p) => p !== pid)!;
-  }
-
-  /**
-   * @brief Sets the game phase and resets player submissions.
-   * @param phase - The new game phase to set.
-   */
-  private turnPhase(phase: GamePhase): void {
-    this.phase = phase;
-    this.resetSubmitted();
-  }
-
-  /**
-   * @brief Updates the bet winner based on the current bets.
-   * This function determines which player has the higher bet and sets them as the bet winner.
-   */
-  private updateBetWinner(): void {
-    const [p1, p2] = this.players;
-    const b1 = this.bets[p1];
-    const b2 = this.bets[p2];
-
-    if (b1 > b2) {
-      this.betWinner = p1;
-    } else {
-      this.betWinner = p2;
     }
   }
+  return { success: false, reason: "Action not allowed in current phase." };
+}
 
-  /**
-   * @brief Gets the current observation for a specific player.
-   * @param pid - The ID of the player for whom the observation is requested.
-   * @returns An object containing the game state relevant to the player.
-   */
-  public getObservationForPlayer(pid: PlayerId): GameObservation {
-    const state = this.playerStates[pid];
-    const opponent = this.getOpponent(pid);
-    const opponentState = this.playerStates[opponent];
+/**
+ * @brief Gets the current observation for a specific player.
+ * @param pid - The ID of the player for whom the observation is requested.
+ * @returns An object containing the game state relevant to the player.
+ */
+export function getObservationForPlayer(
+  game: QuestionOrTruthGame,
+  pid: PlayerId
+): GameObservation {
+  const state = game.playerStates[pid];
+  const opponent = getOpponent(game, pid);
+  const opponentState = game.playerStates[opponent];
 
-    return {
-      phase: this.phase,
-      turn: this.currentTurn,
-      hand: state.hand,
-      chips: state.chips,
-      receivedInfo: state.receivedInfo,
-      givenInfo: opponentState.receivedInfo,
-      opponentChipsKnownLow: opponentState.chips <= LOW_CHIPS_THRESHOLD,
-      canAct:
-        this.phase === "RESOLUTION"
-          ? this.getBetWinner() === pid
-          : this.isGameOver()
-          ? false
-          : true, // can always act except in RESOLUTION phase and END phase
-    };
-  }
+  return {
+    phase: game.phase,
+    turn: game.currentTurn,
+    hand: state.hand,
+    chips: state.chips,
+    receivedInfo: state.receivedInfo,
+    givenInfo: opponentState.receivedInfo,
+    opponentChipsKnownLow: opponentState.chips <= LOW_CHIPS_THRESHOLD,
+    canAct:
+      game.phase === "RESOLUTION"
+        ? getBetWinner(game) === pid
+        : isGameOver(game)
+        ? false
+        : true, // can always act except in RESOLUTION phase and END phase
+  };
+}
 
-  /**
-   * @brief Determines the winner of the current turn based on player bets.
-   * @returns The ID of the player who won the turn, or null if there is no winner.
-   */
-  public getBetWinner(): PlayerId | null {
-    return this.betWinner;
-  }
+/**
+ * @brief Determines the winner of the current turn based on player bets.
+ * @returns The ID of the player who won the turn, or null if there is no winner.
+ */
+export function getBetWinner(game: QuestionOrTruthGame): PlayerId | null {
+  return game.betWinner;
+}
 
-  /**
-   * @brief Gets the winner of the game.
-   * @returns The ID of the player who won the game, or null if there is no winner yet.
-   */
-  public getWinner(): PlayerId | null {
-    return this.winner;
-  }
+/**
+ * @brief Gets the winner of the game.
+ * @returns The ID of the player who won the game, or null if there is no winner yet.
+ */
+export function getWinner(game: QuestionOrTruthGame): PlayerId | null {
+  return game.winner;
+}
 
-  /**
-   * @brief Checks if the game is over.
-   * @returns True if the game has ended, false otherwise.
-   */
-  public isGameOver(): boolean {
-    return this.phase === "END";
-  }
+/**
+ * @brief Checks if the game is over.
+ * @returns True if the game has ended, false otherwise.
+ */
+export function isGameOver(game: QuestionOrTruthGame): boolean {
+  return game.phase === "END";
+}
 
-  public isSetupPhase(): boolean {
-    return this.phase === "SETUP";
-  }
-
-  public setup(): void {
-    this.playerStates = {};
-    this.currentTurn = 0;
-    this.bets = {};
-    this.phase = "SETUP";
-    this.betWinner = null;
-    this.winner = null;
-
-    this.players.forEach((pid) => {
-      this.playerStates[pid] = {
-        hand: [],
-        chips: STARTING_CHIPS,
-        receivedInfo: [],
-        hasSubmitted: false,
-      };
-    });
-  }
+export function isSetupPhase(game: QuestionOrTruthGame): boolean {
+  return game.phase === "SETUP";
 }
 
 // - setup.test.ts               (constructor, setPlayerCards)

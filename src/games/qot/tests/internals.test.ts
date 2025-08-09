@@ -9,6 +9,7 @@ import {
   getHand,
   getTurn
 } from './helpers'
+import { getBetWinner, getWinner, isGameOver } from '../engine/GameLogic'
 
 const Alice = 'Alice'
 const Bob = 'Bob'
@@ -29,7 +30,7 @@ describe('internal - game integrity & phase logic', () => {
     applyBet(game, Bob, 3)
 
     expect(getPhase(game)).toBe('RESOLUTION')
-    expect(game.getBetWinner()).toBe(Bob)
+    expect(getBetWinner(game)).toBe(Bob)
   })
 
   it('allows a question then moves to next turn (back to BETTING)', () => {
@@ -37,7 +38,7 @@ describe('internal - game integrity & phase logic', () => {
     applyBet(game, Bob, 3)
 
     const result = applyQuestion(game, Bob, { type: 'COUNT', variant: 'figures' })
-    expect(!game.isGameOver()).toBe(true)
+    expect(!isGameOver(game)).toBe(true)
     expect(result.success).toBe(true)
 
     expect(getPhase(game)).toBe('BETTING') // tour suivant
@@ -54,7 +55,7 @@ describe('internal - game integrity & phase logic', () => {
     const result = applyTruth(game, Bob, guess)
     expect(result.success).toBe(true)
     expect(getPhase(game)).toBe('END')
-    expect(game.getWinner()).toBe(Bob)
+    expect(getWinner(game)).toBe(Bob)
   })
 
   it('continues if truth is incorrect', () => {

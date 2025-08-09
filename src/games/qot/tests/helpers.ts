@@ -1,5 +1,6 @@
-import { Card, Value, Suit, PlayerId, GameAction } from '../types'
-import { QuestionOrTruthGame } from '../engine/GameLogic'
+import { Card, Value, Suit, PlayerId, GameAction, QuestionOrTruthGame } from '../types'
+import { applyAction, createInitialGameState, setPlayerCards } from '../engine/GameLogic'
+import { answerQuestion, resolvePlayerAction } from '../engine/internals'
 
 // -------------------------------------
 // Types
@@ -83,17 +84,17 @@ export function createInvalidCardSet(set = 1): Card[] {
 // -------------------------------------
 
 export function buildTestGame(): QuestionOrTruthGame {
-  const game = new QuestionOrTruthGame(['Alice', 'Bob'])
+  const game = createInitialGameState(['Alice', 'Bob'])
 
   const cards = createValidCardSet()
-  game.setPlayerCards('Alice', cards)
-  game.setPlayerCards('Bob', cards)
+  setPlayerCards(game, 'Alice', cards)
+  setPlayerCards(game, 'Bob', cards)
 
   return game
 }
 
 export function buildGameInSetup(): QuestionOrTruthGame {
-  return new QuestionOrTruthGame(['Alice', 'Bob'])
+  return createInitialGameState(['Alice', 'Bob'])
 }
 
 export function buildGameWithSetup(): QuestionOrTruthGame {
@@ -101,8 +102,8 @@ export function buildGameWithSetup(): QuestionOrTruthGame {
   const cardsA = createValidCardSet()
   const cardsB = createValidCardSet(2)
 
-  game.setPlayerCards("Alice", cardsA)
-  game.setPlayerCards("Bob", cardsB)
+  setPlayerCards(game, "Alice", cardsA)
+  setPlayerCards(game, "Bob", cardsB)
 
   return game
 }
@@ -116,24 +117,24 @@ export function setPrivate<T = any>(obj: any, key: string, value: T): void {
 }
 
 export function applySetup(game: QuestionOrTruthGame, cardsA = exampleHand, cardsB = exampleHand): void {
-  game.setPlayerCards('Alice', cardsA)
-  game.setPlayerCards('Bob', cardsB)
+  setPlayerCards(game, 'Alice', cardsA)
+  setPlayerCards(game, 'Bob', cardsB)
 }
 
 
-export function applyBet(game: QuestionOrTruthGame, pid: PlayerId, amount: number): ReturnType<typeof game.applyAction> {
+export function applyBet(game: QuestionOrTruthGame, pid: PlayerId, amount: number): ReturnType<typeof applyAction> {
   const action: GameAction = { type: 'bet', bet: amount }
-  return game.applyAction(pid, action)
+  return applyAction(game, pid, action)
 }
 
-export function applyTruth(game: QuestionOrTruthGame, pid: PlayerId, guess: Value[]): ReturnType<typeof game.applyAction> {
+export function applyTruth(game: QuestionOrTruthGame, pid: PlayerId, guess: Value[]): ReturnType<typeof applyAction> {
   const action: GameAction = { type: 'truth', guess }
-  return game.applyAction(pid, action)
+  return applyAction(game, pid, action)
 }
 
-export function applyQuestion(game: QuestionOrTruthGame, pid: PlayerId, question: any): ReturnType<typeof game.applyAction> {
+export function applyQuestion(game: QuestionOrTruthGame, pid: PlayerId, question: any): ReturnType<typeof applyAction> {
   const action: GameAction = { type: 'question', question }
-  return game.applyAction(pid, action)
+  return applyAction(game, pid, action)
 }
 
 export function getChips(game: QuestionOrTruthGame, pid: PlayerId): number {
@@ -158,7 +159,7 @@ export function getTurn(game: QuestionOrTruthGame): number {
 }
 
 export function callResolvePlayerAction(game: QuestionOrTruthGame, pid: PlayerId, action: GameAction) {
-  return (game as any).resolvePlayerAction(pid, action)
+  return resolvePlayerAction(game, pid, action)
 }
 
 export function getReceivedInfo(game: QuestionOrTruthGame, pid: PlayerId) {
@@ -166,7 +167,7 @@ export function getReceivedInfo(game: QuestionOrTruthGame, pid: PlayerId) {
 }
 
 export function callAnswerQuestion(game: QuestionOrTruthGame, pid: PlayerId, question: any) {
-  return (game as any).answerQuestion(pid, question)
+  return answerQuestion(game, pid, question)
 }
 
 export function callTurnPhase(game: QuestionOrTruthGame) {

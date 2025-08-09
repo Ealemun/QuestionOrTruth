@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { QuestionOrTruthGame } from '../engine/GameLogic'
+import { QuestionOrTruthGame } from '../types'
 import { STARTING_CHIPS } from '../config'
 import {
   createValidCardSet,
@@ -8,6 +8,7 @@ import {
   applySetup,
 } from './helpers'
 import { Card } from '../types'
+import { createInitialGameState, setPlayerCards } from '../engine/GameLogic'
 
 const playerA = 'Alice'
 const playerB = 'Bob'
@@ -16,7 +17,7 @@ describe('QuestionOrTruthGame setup', () => {
   let game: QuestionOrTruthGame
 
   beforeEach(() => {
-    game = new QuestionOrTruthGame([playerA, playerB])
+    game = createInitialGameState([playerA, playerB])
   })
 
   it('should initialize with two players', () => {
@@ -28,7 +29,7 @@ describe('QuestionOrTruthGame setup', () => {
 
   it('should accept valid card setup and mark player as ready', () => {
     const cards = createValidCardSet()
-    game.setPlayerCards(playerA, cards)
+    setPlayerCards(game, playerA, cards)
 
     expect(game['playerStates'][playerA].hand).toEqual(cards)
     expect(game['playerStates'][playerA].hasSubmitted).toBe(true)
@@ -37,8 +38,8 @@ describe('QuestionOrTruthGame setup', () => {
 
   it('should transition to BETTING phase once both players submit valid cards', () => {
     const cards = createValidCardSet()
-    game.setPlayerCards(playerA, cards)
-    game.setPlayerCards(playerB, cards)
+    setPlayerCards(game, playerA, cards)
+    setPlayerCards(game, playerB, cards)
 
     expect(game['phase']).toBe('BETTING')
     expect(game['currentTurn']).toBe(1)
@@ -46,7 +47,7 @@ describe('QuestionOrTruthGame setup', () => {
 
     it('should return failure if card order is invalid', () => {
 
-    const result = game.setPlayerCards(playerA, createInvalidCardSet(3))
+    const result = setPlayerCards(game, playerA, createInvalidCardSet(3))
 
     expect(result).toEqual({
         success: false,
@@ -57,10 +58,10 @@ describe('QuestionOrTruthGame setup', () => {
 
     it('should return failure if player tries to set cards outside SETUP phase', () => {
     const cards = createValidCardSet()
-    game.setPlayerCards(playerA, cards)
-    game.setPlayerCards(playerB, cards) // phase now becomes BETTING
+    setPlayerCards(game, playerA, cards)
+    setPlayerCards(game, playerB, cards) // phase now becomes BETTING
 
-    const result = game.setPlayerCards(playerA, cards)
+    const result = setPlayerCards(game, playerA, cards)
 
     expect(result).toEqual({
         success: false,
@@ -70,8 +71,8 @@ describe('QuestionOrTruthGame setup', () => {
 
     it('should reset hasSubmitted flags after both players submit cards', () => {
     const cards = createValidCardSet()
-    game.setPlayerCards(playerA, cards)
-    game.setPlayerCards(playerB, cards) // triggers reset & phase change
+    setPlayerCards(game, playerA, cards)
+    setPlayerCards(game, playerB, cards) // triggers reset & phase change
 
     expect(game['playerStates'][playerA].hasSubmitted).toBe(false)
     expect(game['playerStates'][playerB].hasSubmitted).toBe(false)
@@ -89,8 +90,8 @@ describe('QuestionOrTruthGame setup', () => {
     const cards1 = createValidCardSet()
     const cards2 = createValidCardSet(2)
 
-    game.setPlayerCards(playerA, cards1)
-    const result = game.setPlayerCards(playerA, cards2)
+    setPlayerCards(game, playerA, cards1)
+    const result = setPlayerCards(game, playerA, cards2)
 
     expect(result).toEqual({ success: true })
     expect(game['playerStates'][playerA].hand).toEqual(cards2)
@@ -98,7 +99,7 @@ describe('QuestionOrTruthGame setup', () => {
 
     it('should return failure if unknown player tries to submit cards', () => {
     const cards = createValidCardSet()
-    const result = game.setPlayerCards('intruder', cards as Card[])
+    const result = setPlayerCards(game, 'intruder', cards as Card[])
 
     expect(result).toEqual({ success: false, reason: "Unknown player." })
     })
@@ -108,8 +109,8 @@ describe('QuestionOrTruthGame setup', () => {
     const cards2 = createValidCardSet(2)
     const cards3 = createValidCardSet(3)
 
-    game.setPlayerCards(playerA, cards)
-    game.setPlayerCards(playerB, cards)
+    setPlayerCards(game, playerA, cards)
+    setPlayerCards(game, playerB, cards)
     expect(game['phase']).toBe('BETTING')
     expect(game['playerStates'][playerA].hasSubmitted).toBe(false)
     expect(game['playerStates'][playerB].hasSubmitted).toBe(false)

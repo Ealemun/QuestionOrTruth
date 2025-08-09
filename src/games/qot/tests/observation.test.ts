@@ -5,6 +5,7 @@ import {
   applyQuestion,
   applyTruth
 } from './helpers'
+import { getObservationForPlayer } from '../engine/GameLogic'
 
 const Alice = 'Alice'
 const Bob = 'Bob'
@@ -17,8 +18,8 @@ describe('observation - per player game view', () => {
   })
 
   it('returns correct initial observation for both players', () => {
-    const obsA = game.getObservationForPlayer(Alice)
-    const obsB = game.getObservationForPlayer(Bob)
+    const obsA = getObservationForPlayer(game, Alice)
+    const obsB = getObservationForPlayer(game, Bob)
 
     expect(obsA.phase).toBe('BETTING')
     expect(obsA.turn).toBe(1)
@@ -38,8 +39,8 @@ describe('observation - per player game view', () => {
     applyBet(game, Alice, 2)
     applyBet(game, Bob, 3)
 
-    const obsA = game.getObservationForPlayer(Alice)
-    const obsB = game.getObservationForPlayer(Bob)
+    const obsA = getObservationForPlayer(game, Alice)
+    const obsB = getObservationForPlayer(game, Bob)
 
     expect(obsA.phase).toBe('RESOLUTION')
     expect(obsB.phase).toBe('RESOLUTION')
@@ -55,8 +56,8 @@ describe('observation - per player game view', () => {
 
     applyQuestion(game, Bob, { type: 'COUNT', variant: 'figures' })
 
-    const obsBob = game.getObservationForPlayer(Bob)
-    const obsAlice = game.getObservationForPlayer(Alice)
+    const obsBob = getObservationForPlayer(game, Bob)
+    const obsAlice = getObservationForPlayer(game, Alice)
 
     // Bob should have received info (his question answered)
     expect(obsBob.receivedInfo).toHaveLength(1)
@@ -82,7 +83,7 @@ describe('observation - per player game view', () => {
       applyQuestion(game, Bob, { type: 'COUNT', variant: 'figures' })
     }
 
-    const obsAlice = game.getObservationForPlayer(Alice)
+    const obsAlice = getObservationForPlayer(game, Alice)
     expect(obsAlice.opponentChipsKnownLow).toBe(true)
   })
 
@@ -91,11 +92,11 @@ describe('observation - per player game view', () => {
     applyBet(game, Alice, 1)
     applyBet(game, Bob, 3)
 
-    const oppHand = game.getObservationForPlayer(Alice).hand.map(c => c.rank)
+    const oppHand = getObservationForPlayer(game, Alice).hand.map(c => c.rank)
     applyTruth(game, Bob, oppHand)
 
-    const obsAlice = game.getObservationForPlayer(Alice)
-    const obsBob = game.getObservationForPlayer(Bob)
+    const obsAlice = getObservationForPlayer(game, Alice)
+    const obsBob = getObservationForPlayer(game, Bob)
 
     expect(obsAlice.phase).toBe('END')
     expect(obsBob.phase).toBe('END')
@@ -109,9 +110,9 @@ describe('observation - per player game view', () => {
   applyBet(game, Bob, 3)
   applyQuestion(game, Bob, { type: 'COUNT', variant: 'figures' })
 
-  const obsBob = game.getObservationForPlayer(Bob)
+  const obsBob = getObservationForPlayer(game, Bob)
 
-  expect(obsBob.hand).not.toEqual(game.getObservationForPlayer(Alice).hand)
+  expect(obsBob.hand).not.toEqual(getObservationForPlayer(game, Alice).hand)
   expect(obsBob.givenInfo).toEqual([]) // Bob n'a rien donné
   })
 
@@ -119,15 +120,15 @@ describe('observation - per player game view', () => {
   applyBet(game, Alice, 1)
   applyBet(game, Bob, 3)
 
-  const obsAlice = game.getObservationForPlayer(Alice)
+  const obsAlice = getObservationForPlayer(game, Alice)
   expect(obsAlice.canAct).toBe(false)
   })
 
   it('returns a copy of game state, not a reference', () => {
-  const obsA = game.getObservationForPlayer(Alice)
+  const obsA = getObservationForPlayer(game, Alice)
   obsA.chips = 999 // Should not affect real game
 
-  const newObsA = game.getObservationForPlayer(Alice)
+  const newObsA = getObservationForPlayer(game, Alice)
   expect(newObsA.chips).not.toBe(999)
   })
 })

@@ -16,7 +16,8 @@ import {
   callTurnPhase,
   createValidCardSet
 } from './helpers'
-import { GameAction } from '../types'
+import { GameAction, QuestionResponse } from '../types'
+import { getWinner, isGameOver } from '../engine/GameLogic'
 
 const Alice = 'Alice'
 const Bob = 'Bob'
@@ -41,9 +42,10 @@ describe("resolvePlayerAction", () => {
     const result = callResolvePlayerAction(game, 'Bob', question)
 
     expect(result.success).toBe(true)
-    expect(result.answer.question.type).toBe("COUNT")
-    expect(result.answer.question.variant).toBe("figures")
-    expect(result.answer.value).toBe(2)
+    expect((result.answer as QuestionResponse).question.type).toBe("COUNT")
+    expect((result.answer as QuestionResponse).question.variant).toBe("figures")
+    const resultWithValue = result.answer as { value: number };
+    expect(resultWithValue.value).toBe(2)
     const revealed = getPrivate(game, 'playerStates')['Bob'].receivedInfo
     expect(revealed.length).toBe(1)
     expect(revealed[0].question.type).toBe("COUNT")
@@ -60,8 +62,8 @@ describe("resolvePlayerAction", () => {
     expect(getPhase(game)).toBe('RESOLUTION')
     const result = applyTruth(game, Bob, correctGuess1)
     expect(result).toEqual({ success: true })
-    expect(game.isGameOver()).toBe(true)
-    expect(game.getWinner()).toBe(Bob)
+    expect(isGameOver(game)).toBe(true)
+    expect(getWinner(game)).toBe(Bob)
   })
 
   it("should not end the game with an incorrect truth", () => {
@@ -71,7 +73,7 @@ describe("resolvePlayerAction", () => {
 
     const result = applyTruth(game, Bob, incorrectGuess2)
     expect(result).toEqual({ success: true })
-    expect(game.isGameOver()).toBe(false)
+    expect(isGameOver(game)).toBe(false)
   })
 
   it("should not allow truth action if not the bet winner", () => {
@@ -111,7 +113,7 @@ describe ("nextTurn", () => {
     expect(result.success).toBe(true)
     expect(result.answer).toBe(true)
 
-    expect(game.isGameOver()).toBe(true)
-    expect(game.getWinner()).toBe('Bob')
+    expect(isGameOver(game)).toBe(true)
+    expect(getWinner(game)).toBe('Bob')
 })
 })

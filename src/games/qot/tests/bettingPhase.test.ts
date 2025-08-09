@@ -6,6 +6,7 @@ import {
   getPhase,
   getTurn
 } from './helpers'
+import { getBetWinner } from '../engine/GameLogic'
 
 const Alice = 'Alice'
 const Bob = 'Bob'
@@ -24,7 +25,7 @@ describe('betting phase', () => {
     const resB = applyBet(game, Bob, 6)
     expect(resB).toEqual({ success: true })
 
-    expect(game.getBetWinner()).toBe('Bob')
+    expect(getBetWinner(game)).toBe('Bob')
   })
 
   it('should return failure on invalid bets (negative or too high)', () => {
@@ -39,7 +40,7 @@ describe('betting phase', () => {
     applyBet(game, Alice, 3)
     applyBet(game, Bob, 6)
 
-    expect(game.getBetWinner()).toBe('Bob')
+    expect(getBetWinner(game)).toBe('Bob')
     expect(getChips(game, Alice)).toBe(7) // 10 - 3 + 0
     expect(getChips(game, Bob)).toBe(4)   // 10 - 6 + 0
     expect(getPhase(game)).toBe('RESOLUTION')
@@ -50,7 +51,7 @@ describe('betting phase', () => {
     applyBet(game, Alice, 5)
     applyBet(game, Bob, 5)
 
-    expect(game.getBetWinner()).toBe(null)
+    expect(getBetWinner(game)).toBe(null)
     expect(getChips(game, Alice)).toBe(7)
     expect(getChips(game, Bob)).toBe(7)
     expect(getPhase(game)).toBe('BETTING')
@@ -62,7 +63,7 @@ describe('betting phase', () => {
     applyBet(game, Alice, 2) // last bet counts
     applyBet(game, Bob, 6)
 
-    expect(game.getBetWinner()).toBe('Bob')
+    expect(getBetWinner(game)).toBe('Bob')
     expect(getChips(game, Alice)).toBe(8) // 10 - 2
     expect(getChips(game, Bob)).toBe(4)   // 10 - 6
     expect(getPhase(game)).toBe('RESOLUTION')
@@ -73,7 +74,7 @@ describe('betting phase', () => {
     applyBet(game, Alice, 0)
     applyBet(game, Bob, 5)
 
-    expect(game.getBetWinner()).toBe('Bob')
+    expect(getBetWinner(game)).toBe('Bob')
     expect(getChips(game, Alice)).toBe(10) // no bet
     expect(getChips(game, Bob)).toBe(5)   // 10 - 5
     expect(getPhase(game)).toBe('RESOLUTION')
