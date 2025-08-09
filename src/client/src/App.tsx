@@ -42,8 +42,9 @@ function App() {
       return () => {
     socket.off('room:update');
     socket.off('room:kicked');
+    socket.off('game:start')
   };
-    }, [t]);
+    }, [playerName, t, navigate]);
   
     
   return (
