@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { QuestionOrTruthGame } from '../engine/GameLogic'
-import { Card } from '../types'
+import { Card, QuestionOrTruthGame } from '../types'
 import {
   createCard
 } from './helpers'
+import { createInitialGameState } from '../engine/GameLogic'
+import { validateCardOrder } from '../engine/internals'
 
 
 function buildGame(): QuestionOrTruthGame {
-  return new QuestionOrTruthGame(['A', 'B'])
+  return createInitialGameState(['A', 'B'])
 }
 
 describe('validateCardOrder', () => {
@@ -26,7 +27,7 @@ describe('validateCardOrder', () => {
         createCard(6, 'diamonds'),
         ]
     
-        const [isValid, suit] = (game as any).validateCardOrder(cards)
+        const [isValid, suit] = validateCardOrder(cards)
         expect(isValid).toBe(true)
         expect(suit).toBe(null)
     })
@@ -45,7 +46,7 @@ describe('validateCardOrder', () => {
       createCard(2, 'diamonds'), // diamonds: 6 → 2 wrong
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(false)
     expect(suit).toBe("diamonds")
   })
@@ -64,7 +65,7 @@ describe('validateCardOrder', () => {
       createCard(2, 'hearts'), // hearts: 5 → 3 → 2 is invalid
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(false)
     expect(suit).toBe('hearts')
   })
@@ -81,7 +82,7 @@ describe('validateCardOrder', () => {
       createCard(4, 'spades'),
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(false)
     expect(suit).toBe(null)
   })
@@ -100,7 +101,7 @@ describe('validateCardOrder', () => {
       createCard(4, 'spades'),
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(false)
     expect(suit).toBe('clubs')
   })
@@ -119,7 +120,7 @@ describe('validateCardOrder', () => {
     createCard(6, 'diamonds'),
   ]
 
-  const [isValid, suit] = (game as any).validateCardOrder(cards)
+  const [isValid, suit] = validateCardOrder(cards)
   expect(isValid).toBe(false)
   expect(suit).toBe(null) // car condition === => null
 })
@@ -138,7 +139,7 @@ describe('validateCardOrder', () => {
         createCard(8, 'diamonds'),
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(true)
     expect(suit).toBe(null)
     })
@@ -157,7 +158,7 @@ describe('validateCardOrder', () => {
         createCard(8, 'clubs'),
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(true)
     expect(suit).toBe(null)
     })
@@ -176,7 +177,7 @@ describe('validateCardOrder', () => {
         createCard(13, 'clubs'),
     ]
 
-    const [isValid, suit] = (game as any).validateCardOrder(cards)
+    const [isValid, suit] = validateCardOrder(cards)
     expect(isValid).toBe(false)
     expect(suit).toBe('spades') // doit retourner le premier suit invalide
     })
