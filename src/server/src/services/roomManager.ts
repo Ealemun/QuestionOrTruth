@@ -1,6 +1,7 @@
-import { QuestionOrTruthGame } from "games/qot/engine/GameLogic";
+import { createInitialGameState } from "games/qot/engine/GameLogic";
 import { ChatMessage, GameRoom, Player } from "../../../shared/types";
 import { STARTING_CHIPS } from "../config";
+import { QuestionOrTruthGame } from "games/qot/types";
 
 const rooms: Record<string, GameRoom> = {};
 const playerToRoom: Record<string, string> = {};
@@ -171,7 +172,7 @@ export function startGame(roomId: string): [GameRoom, QuestionOrTruthGame] {
   const room = rooms[roomId];
   const playerIds = room.players.slice(0, 2).map(player => player.id);
   room.status = "in_progress"
-  const game = new QuestionOrTruthGame(playerIds);
+  const game = createInitialGameState(playerIds);
   return [room, game]
 }
 
