@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import socket from "./socket";
 import { useTranslation } from "react-i18next";
 import ChatBox from "./ChatBox";
@@ -17,6 +17,8 @@ const RoomScreen = () => {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
+
+  const [copied, setCopied] = useState(false);
 
   /* redirect to game page when starting */
   useEffect(() => {
@@ -50,15 +52,60 @@ const RoomScreen = () => {
   const launchGame = () => {
     console.log("FRONT LAUNCH");
     socket.emit("room:start_game", room?.id || ""); // À brancher plus tard
+  };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(room?.id || "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Error during the copy :", err);
+    }
   };
 
   return (
     <div className="p-4 space-y-4 flex flex-col items-center justify-center">
       <LanguageSwitcher />
-      <h2 className="text-xl font-bold">
-        {t("room.inRoom", { roomId: room?.id || "" })}
-      </h2>
+      <div className="flex items-center space-x-2">
+        <h2 className="text-xl font-bold">
+          {t("room.inRoom", { roomId: room?.id || "" })}
+        </h2>
+        <button
+          onClick={handleCopy}
+          title="Copy the ID"
+          // className="w-1 h-1 p-0 m-0 flex items-center justify-center overflow-hidden"
+          style={{
+            width: "4rem",
+            height: "4rem",
+            padding: 0,
+            margin: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            border: "none",
+            background: "none",
+          }}
+        >
+          <img
+            src={
+              copied
+                ? "../icons/copy-blue.svg"
+                : "../icons/copy-bw.svg"
+            }
+            alt="Copy"
+            // className="w-full h-full hover:opacity-70 transition-opacity"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
+          {/* <span>Cr</span> */}
+        </button>
+      </div>
       <ul>
         {room?.players.map((p: any, i: number) => (
           <li key={i}>

@@ -21,7 +21,8 @@
         "kicked": "Vous avez été exclu de la salle.",
         "ready": "Prêt",
         "notReady": "Pas prêt",
-        "start": "Lancer la partie"
+        "start": "Lancer la partie",
+        "cantJoin": "Salle pleine ou non trouvée."
       },
     "chat": {
         "send": "Envoyer",

@@ -10,7 +10,7 @@ import socket from "./socket";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../app/store";
 import QOTScreen from "./QOTScreen";
-import { QuestionOrTruthGame } from "games/qot/engine/GameLogic";
+import { QuestionOrTruthGame } from "games/qot/types";
 import { iniitalizeQOT } from "../features/qot/qotSlice";
 
 function App() {

@@ -6,7 +6,8 @@ import ChatBox from "./ChatBox";
 import { RootState } from "client/app/store";
 import { useSelector } from "react-redux";
 import { Setup } from "./components/qot/setup/Setup";
-import { QuestionOrTruthGame } from "games/qot/engine/GameLogic";
+import { QuestionOrTruthGame } from "games/qot/types";
+import { createInitialGameState } from "games/qot/engine/GameLogic";
 
 const faceMap = {
   A: 1,
@@ -43,7 +44,7 @@ const QOT = () => {
     (state: RootState) => state.roomDataSlice.playerName
   );
   const qotGameRawData = useSelector((state: RootState) => state.qotSlicer.qotGame);
-  //const qotGame = qotGameRawData ? QuestionOrTruthGame.fromObject(qotGameRawData.) : null
+  // const qotGame : QuestionOrTruthGame = qotGameRawData ? createInitialGameState(room.players)
   
 
   const [cards, setCards] = useState(Array(8).fill(null));
@@ -66,7 +67,7 @@ const QOT = () => {
 
   return (
     <div>
-      {/*(qotGame && qotGame?.isSetupPhase()) && <Setup /> */}
+      {/*(qotGame && qotGame?.isSetupPhase()) &&*/ <Setup /> }
     </div>
   );
 };
