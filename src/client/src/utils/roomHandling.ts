@@ -2,6 +2,7 @@ import { RoomResponse } from "shared/types";
 import socket from "../socket";
 import { AppDispatch } from "client/app/store";
 import { initializeRoomData } from "../../features/roomDataSlice";
+import { t } from "i18next";
 
 export const handleCreate = (
   playerName: string,
@@ -43,7 +44,7 @@ export const handleJoin = (
       playerName,
       (response: RoomResponse) => {
         if (!response.success) {
-          alert(response.error);
+          alert(t("room.cantJoin"));
           resolve(false);
         } else {
           dispatch(

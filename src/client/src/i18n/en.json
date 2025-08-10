@@ -21,7 +21,8 @@
         "kicked": "You have been kicked from the room.",
         "ready": "Ready",
         "notReady": "Not ready",
-        "start": "Start Game"
+        "start": "Start Game",
+        "cantJoin": "Room full or not found."
       },
     "chat": {
         "send": "Send",
