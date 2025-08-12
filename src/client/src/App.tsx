@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../app/store";
 import QOTScreen from "./QOTScreen";
 import { QuestionOrTruthGame } from "games/qot/types";
-import { iniitalizeQOT } from "../features/qot/qotSlice";
+import { initializeQOT } from "../features/qot/qotSlice";
 
 function App() {
 
@@ -36,7 +36,7 @@ function App() {
 
       socket.on("game:start", (roomData: GameRoom, qotGame: QuestionOrTruthGame) => {
         dispatch(initializeRoomData({roomData, playerName}));
-        dispatch(iniitalizeQOT(qotGame))
+        dispatch(initializeQOT(qotGame))
       })
 
       return () => {

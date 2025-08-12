@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { QuestionOrTruthGame } from "games/qot/engine/GameLogic";
+import { QuestionOrTruthGame } from "games/qot/types";
 import { Card } from "games/qot/types";
 
 interface InitialState {
@@ -14,7 +14,7 @@ const qotSlice = createSlice({
     name: 'qotSlice',
     initialState,
     reducers: {
-        iniitalizeQOT(state, action: PayloadAction<QuestionOrTruthGame>) {
+        initializeQOT(state, action: PayloadAction<QuestionOrTruthGame>) {
             state.qotGame = action.payload
         },
 
@@ -24,5 +24,5 @@ const qotSlice = createSlice({
     }
 })
 
-export const { iniitalizeQOT, deleteQOT } = qotSlice.actions
+export const { initializeQOT, deleteQOT } = qotSlice.actions
 export default qotSlice.reducer
