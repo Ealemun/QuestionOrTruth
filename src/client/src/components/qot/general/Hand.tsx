@@ -12,12 +12,6 @@ export const Hand = () => {
   // Initialise les 8 cellules avec du texte vide
   const [cells, setCells] = useState(Array(8).fill(""));
 
-  // Gère le changement de contenu d'une cellule
-  const handleChange = (index: number, value: string) => {
-    const newCells = [...cells];
-    newCells[index] = value;
-    setCells(newCells);
-  };
 
   return (
     <div className="w-1 mx-auto">
