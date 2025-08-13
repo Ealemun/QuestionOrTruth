@@ -67,3 +67,9 @@ export type Question =
 export type QuestionResponse =
   | { question: Question; value: number } // SUM and COUNT
   | { question: Question; positions: number[] }; // POSITION
+
+export type CardMap = {
+  [suit in Suit]: {
+    [value in Value]: number;
+  };
+};
