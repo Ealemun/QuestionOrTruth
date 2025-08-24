@@ -83,7 +83,6 @@ const MenuScreen = () => {
                   : "../icons/clipboard-bw.svg"
               }
               alt="Copy"
-              // className="w-full h-full hover:opacity-70 transition-opacity"
               style={{
                 width: "100%",
                 height: "100%",

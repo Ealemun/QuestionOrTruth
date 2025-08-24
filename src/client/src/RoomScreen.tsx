@@ -76,10 +76,10 @@ const RoomScreen = () => {
           title="Copy the ID"
           // className="w-1 h-1 p-0 m-0 flex items-center justify-center overflow-hidden"
           style={{
-            width: "4rem",
-            height: "4rem",
+            width: "2rem",
+            height: "2rem",
             padding: 0,
-            margin: 0,
+            marginLeft: 4,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

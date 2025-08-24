@@ -26,7 +26,7 @@ export const Hand = () => {
                     <CardComponent card={hand[index]} />
                   </div>
                 ) : (
-                  <div>prout</div>
+                  <div className="w-[70px] h-[92px] border border-solid border-black "></div>
                 )}
               </td>
             ))}

@@ -11,8 +11,6 @@ export const CardComponent = ({card, disabled}: Props) => {
     return (
     <div className="w-[70px] m-[5px] border-2 border-black">
         <div className="flex flex-col">
-            {/* <div>{card.suit}</div>
-            <div>{card.rank}</div> */}
             <img
               src={path_card}
               style={{
