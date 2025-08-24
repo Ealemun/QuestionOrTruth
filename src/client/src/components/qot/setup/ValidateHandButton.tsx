@@ -1,7 +1,7 @@
 export const ValidateHandButton = () => {
     return (
-        <div>
-            <button>
+        <div className="flex items-center mr-[20px]">
+            <button className="h-[40px] bg-[lightgrey]">
                 Validation
             </button>
         </div>

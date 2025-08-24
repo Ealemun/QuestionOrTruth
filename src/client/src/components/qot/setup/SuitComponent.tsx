@@ -3,44 +3,32 @@ import { CardComponent } from "../general/CardComponent";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "client/app/store";
 import { addCard } from "../../../../features/qot/setupCardsQot";
-import { useEffect, useState } from "react";
 
 interface Props {
   suit: Suit;
 }
 
 export const SuitComponent = ({ suit }: Props) => {
-  /* select player's hand from redux */
-  // const hand = useAppSelector((state) => state.hand)
-  const hand = useSelector(
-    (state: RootState) => state.setupCardsQot.hand
-  );
   const availableCards = useSelector(
     (state: RootState) => state.setupCardsQot.availableCards
   )
 
   const dispatch = useDispatch();
-  // const [cardStyle, setCardStyle] = useState("flex flex-wrap gap-2")
 
 
   function handleSelectCard(rank: Value, suit: Suit) {
     const card = { rank: rank, suit: suit }
-    // console.log("Selected card: ", card)
-    console.log("Available cards: ", availableCards)
     dispatch(addCard(card))
-    // console.log("My hand: ", hand)
-    // ${
-    //   disabled ? 'opacity-50 grayscale pointer-events-none' : ''
   }
 
   function cardStyle(rank: Value, suit: Suit){
     switch (availableCards[suit][rank]) {
       case 0:
-        return "cursor-pointer"
+        return "cursor-pointer hover:opacity-50"
       case 1:
         return "opacity-50 grayscale cursor-not-allowed"
       case 2:
-        return "cursor-pointer opacity-50 grayscale border border-sky-300"
+        return "cursor-pointer opacity-50 grayscale border border-sky-300 hover:opacity-100 hover:grayscale-0"
     }
   }
 
@@ -48,7 +36,7 @@ export const SuitComponent = ({ suit }: Props) => {
     <div className="w-1 mx-auto">
       <div>{suit}</div>
       {/* <CardComponent card={{ rank: 1, suit: suit }} /> */}
-      <div id={suit} className="flex flex-wrap gap-2">
+      <div id={suit} className="flex flex-wrap gap-4">
         {Array.from({ length: 13 }, (_, i) => (
           <div
             key={i}
